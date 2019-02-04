@@ -7,6 +7,6 @@ To read the first lecture note correctly on your own you'll want to install the 
 
 Lectures:
 
-1. [Intro to Computation]()
+1. [Intro to Computation](https://github.com/AEM7130/SPRING2019/blob/master/lecture_notes/1_introduction.ipynb)
 2. [Intro to Coding and Julia]()
 3. [Intro to Git and Version Control]()
