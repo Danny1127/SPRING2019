@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>General Programming and Julia Specifics</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Ivan Rudik" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/metropolis.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/metropolis-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# General Programming and Julia Specifics
+## <html>
+<div style="float:left">
+
+</div>
+<hr color='#459DE0' size=5px width=1100px>
+</html>
+### Ivan Rudik
+### AEM 7130
+
+---
+
+
+# Software and stuff
+
+Necessary things to do:
+
+- Install [Julia](https://julialang.org/downloads/)
+
+--
+
+These slides are based on QuantEcon, Julia documentation, etc
+
+---
+
+# First things first
+
+Why am I pushing you to learn Julia?
+
+1. It's a high-level language, much easier to use than C++, Fortran, etc
+2. It delivers speeds in the ballpark of C++ and Fortran even with the super old 0.2 version
+
+&lt;div align="center"&gt;
+  &lt;img src="figures/julia_speed.png" height=450&gt;
+&lt;/div&gt;
+
+---
+
+# Intro to programming
+
+### Programming `\(\equiv\)` writing a set of instructions
+
+1. There are hard and fast rules you can't break if you want it to work
+2. There are elements of style (e.g. Strunk and White) that make for clearer and more efficient code
+
+
+--
+
+If you will be doing computational work there are:
+
+1. Language-independent coding basics you should know
+  - Arrays are stored in memory in particular ways  
+--
+
+2. Language-independent best practices you should use
+  - Indent to convey program structure (or function in Python)   
+--
+
+3. Language-dependent idiosyncracies that matter for function, speed, memory allocation, etc
+  - MATLAB: vectorize, vectorize, vectorize
+  - Julia: loops forever
+
+---
+# Intro to programming
+
+### Learning these early will:
+
+1. Make coding a lot easier
+--
+
+2. Reduce total programmer time
+--
+
+3. Reduce total computer time
+--
+
+4. Make your code understandable by someone else or your future self
+--
+
+5. Make your code flexible
+
+---
+
+# A broad view of programming
+
+Your goal is to make a **program**
+
+A program is made of different components and sub-components
+
+--
+ 
+The most basic component is a **statement**, more commonly called a **line of code**
+
+--
+
+Here's pseudoprogram:  
+```julia
+deck = ["4 of hearts", "King of clubs", "Ace of spades"]
+shuffled_deck = shuffle(deck)
+first_card = shuffled_deck[1]
+println("The first drawn card was " * shuffled_deck ".")
+```
+
+This program is real simple:
+
+---
+
+# A broad view of programming
+
+Your goal is to make a **program**
+
+A program is made of different components and sub-components
+ 
+The most basic component is a **statement**, more commonly called a **line of code**
+
+Here's pseudoprogram:  
+```julia
+*deck = ["4 of hearts", "King of clubs", "Ace of spades"]
+shuffled_deck = shuffle(deck)
+first_card = shuffled_deck[1]
+println("The first drawn card was " * shuffled_deck ".")
+```
+
+This program is real simple:
+
+1. Create a deck of cards
+
+---
+
+# A broad view of programming
+
+Your goal is to make a **program**
+
+A program is made of different components and sub-components
+ 
+The most basic component is a **statement**, more commonly called a **line of code**
+
+Here's pseudoprogram:  
+```julia
+deck = ["4 of hearts", "King of clubs", "Ace of spades"]
+*shuffled_deck = shuffle(deck)
+first_card = shuffled_deck[1]
+println("The first drawn card was " * shuffled_deck ".")
+```
+
+This program is real simple:
+
+1. Create a deck of cards
+2. Shuffle the deck
+
+---
+
+# A broad view of programming
+
+Your goal is to make a **program**
+
+A program is made of different components and sub-components
+ 
+The most basic component is a **statement**, more commonly called a **line of code**
+
+Here's pseudoprogram:  
+```julia
+deck = ["4 of hearts", "King of clubs", "Ace of spades"]
+shuffled_deck = shuffle(deck)
+*first_card = shuffled_deck[1]
+println("The first drawn card was " * shuffled_deck ".")
+```
+
+This program is real simple:
+
+1. Create a deck of cards
+2. Shuffle the deck
+3. Draw the top card
+
+---
+
+# A broad view of programming
+
+Your goal is to make a **program**
+
+A program is made of different components and sub-components
+ 
+The most basic component is a **statement**, more commonly called a **line of code**
+
+Here's pseudoprogram:  
+```julia
+deck = ["4 of hearts", "King of clubs", "Ace of spades"]
+shuffled_deck = shuffle(deck)
+first_card = shuffled_deck[1]
+*println("The first drawn card was " * shuffled_deck ".")
+```
+
+This program is real simple:
+
+1. Create a deck of cards
+2. Shuffle the deck
+3. Draw the top card
+4. Print it
+
+---
+
+# A broad view of programming  
+```julia
+deck = ["4 of hearts", "King of clubs", "Ace of spades"]
+shuffled_deck = shuffle(deck)
+first_card = shuffled_deck[1]
+println("The first drawn card was " * shuffled_deck ".")
+```
+
+What are the parentheses and why are they different from square brackets?
+
+How does shuffle work? 
+
+What’s println? 
+
+It’s important to know that a good program has understandable code
+
+---
+
+# Julia specifics
+
+We will discuss coding in the context of Julia but a lot of this ports to Python, MATLAB, etc
+
+To do:
+
+1. Types
+2. Operators
+3. Scope
+4. Generic functions
+5. Multiple dispatch
+
+---
+
+# Types
+
+All languages have some kind of **data types** like integers or arrays
+
+The first type you will often use is a boolean (`Bool`) variable that takes on a value of `true` or `false`:
+
+```julia
+x = true
+```
+
+```
+## true
+```
+
+```julia
+typeof(x)
+```
+
+```
+## Bool
+```
+Note that lines starting with `##` are code output
+
+--
+
+We can save the boolean value of actual statements in variables this way:
+
+```julia
+@show y = 1 &gt; 2
+```
+
+```
+## y = 1 &gt; 2 = false
+```
+
+```
+## false
+```
+
+`@show` is a Julia macro for showing the operation
+
+---
+
+# Numbers
+
+Two other data types you will use frequently are integers
+
+```julia
+typeof(1)
+```
+
+```
+## Int64
+```
+
+and floating point numbers
+
+```julia
+typeof(1.0)
+```
+
+```
+## Float64
+```
+Recall from last week the 64 means 64 bits of storage for the number, which is probably the default on your machine
+
+--
+
+But you can always instantiate alternative floating point number types
+
+
+```julia
+converted_int = convert(Float32, 1.0);
+typeof(converted_int)
+```
+
+```
+## Float32
+```
+
+---
+
+# Numbers
+
+### Math works like you would expect:
+
+```julia
+a = 2; b = 1.0;
+a * b
+```
+
+```
+## 2.0
+```
+--
+
+```julia
+a^2
+```
+
+```
+## 4
+```
+--
+
+```julia
+2a - 4b
+```
+
+```
+## 0.0
+```
+--
+
+```julia
+@show 4a + 3b^2
+```
+
+```
+## 4a + 3 * b ^ 2 = 11.0
+```
+
+```
+## 11.0
+```
+--
+You dont need `*` inbetween numeric literals (numbers) and variables
+
+---
+
+# Strings
+
+Strings store sequences of characters
+
+You implement them with double quotations:
+
+
+```julia
+x = "Hello World!";
+typeof(x)
+```
+
+```
+## String
+```
+
+Note that `;` suppresses output for that line of code but is unnecessary
+
+--
+
+It's easy to work with strings, use `$` to interpolate a variable/expression
+
+```julia
+x = 10; y = 20; println("x + y =  $(x+y).")
+```
+
+```
+## x + y =  30.
+```
+
+--
+
+Use `*` to concatenate strings
+
+```julia
+a = "Aww"; b = "Yeah!!!"; println(a * " " * b)
+```
+
+```
+## Aww Yeah!!!
+```
+
+--
+
+You probably won't use strings too often unless you're working with data or printing output
+
+---
+
+# Containers
+
+Containers are types that store collections of data
+
+--
+
+The most basic container is the `Array` which is denoted by square brackets
+
+--
+
+
+
+```julia
+a1 = [1 2; 3 4]; typeof(a1)
+```
+
+```
+## Array{Int64,2}
+```
+`a1` is a two-dimensional `Array` of `Int64`s
+
+--
+
+Arrays are **mutable** which means you can change their values
+
+--
+
+
+
+```julia
+a1[1,1] = 5; a1
+```
+
+```
+## 2×2 Array{Int64,2}:
+##  5  2
+##  3  4
+```
+
+You reference elements in a container with square brackets
+
+---
+
+# Containers
+
+An alternative to the `Array` is the `Tuple` which is denoted by parentheses
+
+--
+
+
+```julia
+a2 = (1, 2, 3, 4); typeof(a2)
+```
+
+```
+## NTuple{4,Int64}
+```
+`a2` is a `Tuple` of 4 `Int64`s, tuples have no dimension
+
+--
+
+Tuples are **immutable** which means you **can't** change their values
+
+```julia
+a2[1,1] = 5;
+```
+
+
+Error happens in Julia.
+MethodError: no method matching setindex!(::NTuple{4,Int64}, ::Int64, ::Int64, ::Int64)
+Stacktrace:
+ [1] top-level scope at none:3
+ [2] eval(::Module, ::Any) at ./boot.jl:328
+ [3] top-level scope at /Library/Frameworks/R.framework/Versions/3.4/Resources/library/JuliaCall/julia/RmdStd.jl:15 [inlined]
+ [4] top-level scope at ./none:0
+ [5] eval(::Module, ::Any) at ./boot.jl:328
+ [6] eval_string(::String) at /Library/Frameworks/R.framework/Versions/3.4/Resources/library/JuliaCall/julia/setup.jl:192
+ [7] docall(::Ptr{Nothing}) at /Library/Frameworks/R.framework/Versions/3.4/Resources/library/JuliaCall/julia/setup.jl:165
+NULL
+
+--
+
+
+
+```julia
+a2
+```
+
+```
+## (1, 2, 3, 4)
+```
+
+---
+
+# Containers
+
+Tuples don't need parentheses (but it's probably best practice for clarity)
+
+```julia
+a3 = 5, 6; typeof(a3)
+```
+
+```
+## Tuple{Int64,Int64}
+```
+
+--
+
+And they can be **unpacked** (see [`NamedTuple`](https://docs.julialang.org/en/v1/manual/types/index.html#Parametric-Types-1) for an alternative and more efficient container)
+
+--
+
+
+```julia
+a3_x, a3_y = a3;
+a3_x
+```
+
+```
+## 5
+```
+
+```julia
+a3_y
+```
+
+```
+## 6
+```
+
+--
+
+This is basically how functions return output when you call them
+
+---
+
+# Containers
+
+A `Dictionary` is the last main container type, they are arrays but are indexed by keys (names) instead of numbers
+
+--
+
+
+```julia
+d1 = Dict("class" =&gt; "AEM7130", "grade" =&gt; 97); 
+typeof(d1)
+```
+
+```
+## Dict{String,Any}
+```
+
+--
+
+`d1` is a dictionary where the key are strings and the values are any kind of type
+
+---
+
+# Containers
+
+Reference specific values you want in the dictionary by referencing the key
+
+--
+
+
+```julia
+d1["class"]
+```
+
+```
+## "AEM7130"
+```
+
+```julia
+d1["grade"]
+```
+
+```
+## 97
+```
+
+--
+
+If you just want all the keys or all the values you can use the base functions
+
+--
+
+
+```julia
+keys_d1 = keys(d1)
+```
+
+```
+## Base.KeySet for a Dict{String,Any} with 2 entries. Keys:
+##   "class"
+##   "grade"
+```
+
+```julia
+values_d1 = values(d1)
+```
+
+```
+## Base.ValueIterator for a Dict{String,Any} with 2 entries. Values:
+##   "AEM7130"
+##   97
+```
+
+---
+
+# Iterating
+
+As in other languages we have loops at our disposal:
+
+`for` loops iterate over containers
+
+```julia
+for count in 1:10
+  random_number = rand()
+  if random_number &gt; 0.5
+    println("We drew a $random_number.")
+  end
+end
+```
+
+```
+## We drew a 0.9332054976274591.
+## We drew a 0.7004376860052908.
+## We drew a 0.6005673250474377.
+## We drew a 0.8813260779836127.
+## We drew a 0.5590946781659847.
+```
+
+---
+  
+# Iterating
+
+`while` loops iterate until a logical expression is false 
+
+```julia
+while rand() &gt; 0.5
+  random_number = rand()
+  if random_number &gt; 0.5
+    println("We drew a $random_number.")
+  end
+end
+```
+
+---
+
+# Iterating
+
+An `Iterable` is something you can loop over, like arrays
+
+--
+
+
+```julia
+actions = ["codes well", "skips class"];
+for action in actions
+    println("Charlie $action")
+end
+```
+
+```
+## Charlie codes well
+## Charlie skips class
+```
+
+--
+
+But there's a type that's a subset of iterables: `Iterator`
+
+--
+
+These include things like the dictionary keys:
+
+```julia
+for key in keys_d1
+  println(d1[key])
+end
+```
+
+```
+## AEM7130
+## 97
+```
+
+---
+
+# Iterating
+
+Iterating on iterators is more memory efficient than iterating on arrays
+
+--
+
+Here's a **very** simple example (the `global` isn't great style but ignore that; advanced tip: fix it with a wrapper function):
+
+--
+
+
+```julia
+j = 1;
+@time for i = [1, 2, 3, 4, 5, 6]
+  global j *= i
+end
+```
+
+```
+##   0.000006 seconds (2 allocations: 144 bytes)
+```
+
+--
+
+
+```julia
+m = 1;
+@time for i = 1:6
+  global m *= i
+end
+```
+
+```
+##   0.000006 seconds (1 allocation: 16 bytes)
+```
+
+--
+
+`@time` is a macro that shows you the elasped time, memory allocation, and number of allocations (also garbage collection)
+
+--
+
+Minimizing allocations and garbage collection will make your code faster (see `@profile`)
+
+---
+
+# Neat looping
+
+The nice thing about Julia vs MATLAB is your loops can be much neater since you don't need to index if you just want the container elements
+
+--
+
+
+```julia
+f(x) = x^2;
+x_values = 0:20:100;
+for x in x_values
+  println(f(x))
+end
+```
+
+```
+## 0
+## 400
+## 1600
+## 3600
+## 6400
+## 10000
+```
+
+--
+
+The loop directly assigns the elements of `x_values` to `x` instead of having to do something clumsy like `x_values[i]`
+
+--
+
+`0:20:100` creates something called a `StepRange` which starts at `0`, steps up by `20` and ends at `100`
+
+
+---
+
+# Neat looping
+
+You can also pull out an index and the element value by enumerating
+
+
+```julia
+f(x) = x^2;
+x_values = 0:20:100;
+for (index, x) in enumerate(x_values)
+  println("f(x) at value $index is $(f(x)).")
+end
+```
+
+```
+## f(x) at value 1 is 0.
+## f(x) at value 2 is 400.
+## f(x) at value 3 is 1600.
+## f(x) at value 4 is 3600.
+## f(x) at value 5 is 6400.
+## f(x) at value 6 is 10000.
+```
+
+`enumerate` basically assigns an index vector
+
+---
+
+# Neat looping
+
+There is also a lot of Python-esque functionality
+
+--
+
+For example: `zip` lets you loop over multiple different iterables at once
+
+--
+
+
+```julia
+last_name = ("Lincoln", "Bond", "Walras");
+first_name = ("Abraham", "James", "Leon");
+
+for (first_idx, last_idx) in zip(first_name, last_name)
+  println("The name's $last_idx, $first_idx $last_idx.")
+end
+```
+
+```
+## The name's Lincoln, Abraham Lincoln.
+## The name's Bond, James Bond.
+## The name's Walras, Leon Walras.
+```
+
+---
+
+# Neat looping
+
+Nested loops can also be made very neatly
+
+--
+
+
+```julia
+for x in 1:3, y in 3:-1:1
+  println(y-x)
+end
+```
+
+```
+## 2
+## 1
+## 0
+## 1
+## 0
+## -1
+## 0
+## -1
+## -2
+```
+
+--
+
+The first loop is the inner loop, the second loop is the outer loop
+
+---
+
+# Comprehensions: the neatest looping
+
+Comprehensions are super nice ways to use iterables that make your code cleaner and more compact
+
+--
+
+
+```julia
+squared = [y^2 for y in 1:2:11]
+```
+
+```
+## 6-element Array{Int64,1}:
+##    1
+##    9
+##   25
+##   49
+##   81
+##  121
+```
+
+--
+
+This created a 1-dimension `Array` using one line
+
+---
+
+# Comprehensions: the neatest looping
+
+We can also use nested loops for comprehensions
+
+--
+
+
+```julia
+squared_2 = [(y+z)^2 for y in 1:2:11, z in 1:6]
+```
+
+```
+## 6×6 Array{Int64,2}:
+##    4    9   16   25   36   49
+##   16   25   36   49   64   81
+##   36   49   64   81  100  121
+##   64   81  100  121  144  169
+##  100  121  144  169  196  225
+##  144  169  196  225  256  289
+```
+
+--
+
+This created a 2-dimensional `Array`
+
+--
+
+Use this (and the compact nested loop) sparingly since it's hard to follow
+
+---
+
+# Dot syntax: vectorization
+
+Vectorizing operations (e.g. applying it to a whole array or vector at once) is easy in Julia, just use dot syntax like you would in MATLAB, etc
+
+--
+
+
+```julia
+g(x) = x^2;
+squared_2 = g.(1:2:11)
+```
+
+```
+## 6-element Array{Int64,1}:
+##    1
+##    9
+##   25
+##   49
+##   81
+##  121
+```
+
+--
+
+This is actually called **broadcasting**
+
+--
+
+When broadcasting, you might want to consider **pre-allocating** arrays
+
+---
+# Dot syntax: vectorization
+
+Not pre-allocated:
+
+
+```julia
+h(y,z) = y^2 + sin(z);   # functiom to evaluate
+```
+
+```
+## h (generic function with 1 method)
+```
+
+```julia
+y = 1:2:1e6+1;           # input y
+```
+
+```
+## 1.0:2.0:1.000001e6
+```
+
+```julia
+z = rand(length(y));     # input z
+```
+
+```
+## 500001-element Array{Float64,1}:
+##  0.18488805388691598 
+##  0.30776045707319133 
+##  0.4294364618955493  
+##  0.8713285590217956  
+##  0.016280524931383322
+##  0.44644297251014753 
+##  0.8593005067544544  
+##  0.3827343707512709  
+##  0.4323601901215184  
+##  0.4118573436607669  
+##  ⋮                   
+##  0.4991798887301009  
+##  0.44166433552473183 
+##  0.07442216731759443 
+##  0.2569772629653573  
+##  0.7062958078326498  
+##  0.9976088069416131  
+##  0.3652496686452795  
+##  0.9545128309931177  
+##  0.17664477491391195
+```
+
+```julia
+out_1 = h.(y,z);         # pre-evaluate h.(y,z)
+```
+
+```
+## 500001-element Array{Float64,1}:
+##    1.1838364964830008   
+##    9.302925081297412    
+##   25.416358499426828    
+##   49.76518495235373     
+##   81.01627980573383     
+##  121.43175987408337     
+##  169.75738600192767     
+##  225.3734583930208      
+##  289.41901497133233     
+##  361.4003120480053      
+##    ⋮                    
+##    9.999700002254788e11 
+##    9.999740001694275e11 
+##    9.999780001210743e11 
+##    9.999820000812542e11 
+##    9.99986000049649e11  
+##    9.999900000258402e11 
+##    9.999940000093572e11 
+##    9.99998000001816e11  
+##    1.0000020000011758e12
+```
+
+```julia
+@time out_1 = h.(y,z)    # evaluate h.(y,z) and time
+```
+
+```
+##   0.006170 seconds (8 allocations: 3.815 MiB)
+```
+
+```
+## 500001-element Array{Float64,1}:
+##    1.1838364964830008   
+##    9.302925081297412    
+##   25.416358499426828    
+##   49.76518495235373     
+##   81.01627980573383     
+##  121.43175987408337     
+##  169.75738600192767     
+##  225.3734583930208      
+##  289.41901497133233     
+##  361.4003120480053      
+##    ⋮                    
+##    9.999700002254788e11 
+##    9.999740001694275e11 
+##    9.999780001210743e11 
+##    9.999820000812542e11 
+##    9.99986000049649e11  
+##    9.999900000258402e11 
+##    9.999940000093572e11 
+##    9.99998000001816e11  
+##    1.0000020000011758e12
+```
+
+---
+# Dot syntax: vectorization
+
+Pre-allocated, clumsy dot syntax where `.=` assigns elements in a vectorized fashion:
+
+
+```julia
+out_2 = similar(y);
+out_2 .= h.(y,z);
+@time out_2 .= h.(y,z)
+```
+
+```
+##   0.005328 seconds (6 allocations: 240 bytes)
+```
+
+```
+## 500001-element Array{Float64,1}:
+##    1.1838364964830008   
+##    9.302925081297412    
+##   25.416358499426828    
+##   49.76518495235373     
+##   81.01627980573383     
+##  121.43175987408337     
+##  169.75738600192767     
+##  225.3734583930208      
+##  289.41901497133233     
+##  361.4003120480053      
+##    ⋮                    
+##    9.999700002254788e11 
+##    9.999740001694275e11 
+##    9.999780001210743e11 
+##    9.999820000812542e11 
+##    9.99986000049649e11  
+##    9.999900000258402e11 
+##    9.999940000093572e11 
+##    9.99998000001816e11  
+##    1.0000020000011758e12
+```
+
+---
+# Dot syntax: vectorization
+
+Pre-allocated, galaxy brain dot syntax:
+
+
+```julia
+out_3 = similar(y);
+@. out_3 = h(y,z);
+@time @. out_3 = h(y,z)
+```
+
+```
+##   0.004395 seconds (6 allocations: 240 bytes)
+```
+
+```
+## 500001-element Array{Float64,1}:
+##    1.1838364964830008   
+##    9.302925081297412    
+##   25.416358499426828    
+##   49.76518495235373     
+##   81.01627980573383     
+##  121.43175987408337     
+##  169.75738600192767     
+##  225.3734583930208      
+##  289.41901497133233     
+##  361.4003120480053      
+##    ⋮                    
+##    9.999700002254788e11 
+##    9.999740001694275e11 
+##    9.999780001210743e11 
+##    9.999820000812542e11 
+##    9.99986000049649e11  
+##    9.999900000258402e11 
+##    9.999940000093572e11 
+##    9.99998000001816e11  
+##    1.0000020000011758e12
+```
+
+---
+# Logical operators
+
+Logical operators work like every other language 
+
+--
+
+- `==` tests for equality
+
+--
+
+
+```julia
+1 == 1
+```
+
+```
+## true
+```
+
+--
+
+- `!=` tests for inequality
+
+--
+
+
+```julia
+2 != 2
+```
+
+```
+## false
+```
+
+--
+
+- You can also test for approximate equality with `\(\approx\)` (type `\approx&lt;TAB&gt;`)
+
+--
+
+
+```julia
+1.00000001 ≈ 1
+```
+
+```
+## true
+```
+
+---
+# Scope
+
+**Scope** can be a frustrating concept if you haven't used a similarly scoped language before (and why I used that `global` indicator before)
+
+--
+
+The scope of a variable name determines when it is valid to refer to it
+
+--
+
+If you want to dive into the details: the type of scoping in Julia is called **lexical scoping**
+
+--
+
+Different scopes can have the same name, i.e. `saving_rate`, but be assigned to different variables
+
+--
+
+Let's walk through some simple examples to see how it works
+
+--
+
+First, functions have their own local scope
+
+--
+
+
+```julia
+ff(xx) = xx^2;
+yy = 5;
+ff(yy)
+```
+
+```
+## 25
+```
+
+`xx` isn't bound to any values outside the function `ff`
+
+---
+# Scope
+
+This allows us to do things like:
+
+
+```julia
+xx = 10;
+fff(xx) = xx^2;
+fff(5)
+```
+
+```
+## 25
+```
+
+Although `xx` was declared equal to 10, the function still evaluated at 5
+
+--
+
+This is all kind of obvious so far
+
+---
+
+# Scope
+
+But, this type of scoping also has (initially) counterintuitive results like:
+
+
+```julia
+zz = 0;
+for ii = 1:10
+  zz = ii
+end
+println("zz = $zz")
+```
+
+```
+## zz = 0
+```
+
+--
+
+What happened?
+
+--
+
+The `zz` outside the for loop has a different scope, the **global scope**, than the `zz` inside it
+
+--
+
+The `zz` inside the for loop has a scope local to the loop
+
+--
+
+Since the outside `zz` has global scope the loop can't change it without the `global` indicator like we saw earlier 
+
+---
+
+# Scope
+
+Generally you want to avoid `global` because it can cause conflicts, slowness, etc, but you can use them if you want something to have global scope
+
+
+```julia
+zz = 0;
+for ii = 1:10
+  global zz
+  zz = ii
+end
+println("zz = $zz")
+```
+
+```
+## zz = 10
+```
+
+---
+
+# Scope
+
+Local scope kicks in whenever you have a new block keyword (i.e. you indented something) except for `if`
+
+Global variables inside a local scope are inherted for reading, not writing
+
+
+```julia
+x, y = 1, 2;
+function foo()
+  x = 2        # assignment introduces a new local
+  return x + y # y refers to the global
+end;
+foo()
+```
+
+```
+## 4
+```
+
+```julia
+x
+```
+
+```
+## 1
+```
+
+`foo` did not alter the value of `x` defined outside its local scope
+
+---
+
+# Scope
+
+Important piece: nested functions can modify their parent scope's *local* variables
+
+--
+
+
+```julia
+x, y = 1, 2; # set globals
+```
+
+```
+## (1, 2)
+```
+
+```julia
+
+function f_outer()
+  x = 2                # introduces a new local
+  function f_inner()
+    x = 10             # modifies the parent's x
+    return x + y       # y is global
+  end
+  return f_inner() + x # 12 + 10 (x is modified in call of bar())
+end;
+f_outer()
+```
+
+```
+## 22
+```
+
+```julia
+x, y                   # verify that global x and y are unchanged
+```
+
+```
+## (1, 2)
+```
+
+--
+
+If `f_inner` was not nested and was in the global scope we'd get `12` not `22`, this is also a way to handle the issue with loops editing variables not created in their local scope
+
+---
+
+# Scope
+
+We can fix looping issues with global scope by using a wrapper function that doesn't do anything but change the parent scope so it is not global
+
+
+```julia
+function wrapper()
+  zzz = 0;
+  for iii = 1:10
+    zzz = iii
+  end
+  println("zzz = $zzz") 
+end
+```
+
+```
+## wrapper (generic function with 1 method)
+```
+
+```julia
+wrapper()
+```
+
+```
+## zzz = 10
+```
+
+---
+
+# Closures
+
+These inner functions we've been looking at are called **closures**
+
+When a function `f` is parsed in Julia, it looks to see if any of the variables have been previously defined in the current scope
+
+
+```julia
+a = 0.2;
+f(x) = a * x^2;    # refers to the `a` in the outer scope
+```
+
+```
+## f (generic function with 1 method)
+```
+
+```julia
+f(1)               # univariate function
+```
+
+```
+## 0.2
+```
+
+--
+
+
+```julia
+function g(a)
+    f(x) = a * x^2; # refers to the `a` passed in the function
+    f(1);           # univariate function
+end
+```
+
+```
+## g (generic function with 1 method)
+```
+
+```julia
+g(0.2)
+```
+
+```
+## 0.2
+```
+
+--
+
+In both of these examples `f` is a closure designed to **capture** a variable from an outer scope
+
+---
+
+# Closures
+
+Here's a complicated example that actually returns a closure (a function!) itself:
+
+
+```julia
+x = 0;
+function toplevel(y)
+  println("x = ", x, " is a global variable")
+  println("y = ", y, " is a parameter")
+  z = 2
+  println("z = ", z, " is a local variable")
+  
+  function closure(v)
+    println("v = ", v, " is a parameter")
+    w = 3
+    println("w = ", w, " is a local variable")
+    println("x = ", x, " is a global variable")
+    println("y = ", y, " is a closed variable (a parameter of the outer function)")
+    println("z = ", z, " is a closed variable (a local of the outer function)")
+  end;
+  return closure
+end;
+```
+
+---
+
+# Closures
+
+Here's a complicated example:
+
+
+```julia
+c_func = toplevel(10)
+```
+
+```
+## x = 0 is a global variable
+## y = 10 is a parameter
+## z = 2 is a local variable
+```
+
+```
+## (::getfield(Main, Symbol("#closure#207")){Int64,Int64}) (generic function with 1 method)
+```
+
+```julia
+c_func(20)
+```
+
+```
+## v = 20 is a parameter
+## w = 3 is a local variable
+## x = 0 is a global variable
+## y = 10 is a closed variable (a parameter of the outer function)
+## z = 2 is a closed variable (a local of the outer function)
+```
+
+The returned closure still has access to the outer function's local scope!
+
+---
+
+# Closures
+
+Closures are what allow programmers to write packages that do functions of functions, e.g. taking expectations
+
+```julia
+using Expectations, Distributions
+
+@show d = Exponential(2.0)
+
+f(x) = x^2
+```
+
+```
+## f (generic function with 1 method)
+```
+
+```julia
+@show expectation(f, d)  # E(f(x))
+```
+
+---
+
+# Generic functions
+
+If you go down a computational route with research a goal you should have in mind is to write **generic functions**
+
+--
+
+These are functions that are flexible (e.g. can deal with someone using an `Int` instead of a `Float`) and have high performance (e.g. comparable speed to C)
+
+--
+
+Functions are made generic by paying attention to types and making sure types are **stable**
+
+--
+
+**Type stability:** Given an input, operations on that input should maintain the type so Julia **knows** what its type will be throughout
+
+--
+
+This allows it to compile type-specialized versions of the functions, which will yield higher performance
+
+--
+
+The question you might have is: Type stability sounds like mandating types, so how do we make it flexible?
+
+--
+
+We'll see next
+
+---
+
+# These two functions look the same, but are they?
+
+
+```julia
+function t1(n)
+  s = 0
+  t = 1
+  for i in 1:n
+     s += s/i
+     t = div(t, i)
+  end
+  return t
+end
+```
+
+```
+## t1 (generic function with 1 method)
+```
+
+```julia
+function t2(n)
+  s  = 0.0
+  t = 1
+  for i in 1:n
+     s += s/i
+     t = div(t, i)
+  end
+  return t
+end
+```
+
+```
+## t2 (generic function with 1 method)
+```
+
+---
+
+# No! t1 is not type stable
+
+--
+
+`t1` starts with `s` as an `Int64` but then we have `s += s/i` which will mean it must hold a `Float64`
+
+--
+
+It must be converted to `Float` so it is not type stable
+
+--
+
+We can see this when calling the macro `@code_warntype` where it reports `t1` must at some point handle a variable that is `Union{Float64,Int64}`, either `Float64` or `Int64`
+
+Julia now can't assume `s`'s type and produce pure integer or floating point code `\(\rightarrow\)` performance degradation
+
+&lt;div align="center"&gt;
+  &lt;img src="figures/code_warntype.png" height=350&gt;
+&lt;/div&gt;
+
+---
+
+# Concrete vs abstract types
+
+A **concrete type** is one that can be instantiated (`Float64` `Bool` `Int32`)
+
+--
+
+An **abstract type** cannot (`Real`, `Number`, `Any`)
+
+--
+
+Abstract types are for organizing the types
+
+You can check where types are in the hierarchy
+
+
+```julia
+@show Float64 &lt;: Real
+```
+
+```
+## Float64 &lt;: Real = true
+```
+
+```
+## true
+```
+
+```julia
+@show Array &lt;: Real
+```
+
+```
+## Array &lt;: Real = false
+```
+
+```
+## false
+```
+
+```julia
+@show Number &lt;: Any
+```
+
+```
+## Number &lt;: Any = true
+```
+
+```
+## true
+```
+
+---
+
+# Concrete vs abstract types
+
+You can see the type hierarchy with the supertypes and subtypes commands
+
+
+```julia
+using Base: show_supertypes
+show_supertypes(Float64)
+```
+
+```
+## Float64 &lt;: AbstractFloat &lt;: Real &lt;: Number &lt;: Any
+```
+
+---
+
+# Creating new types
+
+We can actually create new composite types using `struct`
+
+--
+
+
+```julia
+struct FoobarNoType # This will be immutable by default
+  a
+  b
+  c
+end
+```
+
+--
+
+This creates a new type called `FoobarNoType`, and we can generate a variable of this type using its **constructor** which will have the same name
+
+--
+
+
+```julia
+newfoo = FoobarNoType(1.3, 2, "plzzz");
+typeof(newfoo)
+```
+
+```
+## FoobarNoType
+```
+
+```julia
+newfoo.a
+```
+
+```
+## 1.3
+```
+
+--
+
+### You should always declare types for the fields of a new composite type
+
+---
+
+# Creating new types
+
+You can declare types with the double colon
+
+
+
+```julia
+struct FoobarType # This will be immutable by default
+  a::Float64
+  b::Int
+  c::String
+end
+```
+
+--
+
+
+```julia
+newfoo_typed = FoobarType(1.3, 2, "plzzz");
+typeof(newfoo_typed)
+```
+
+```
+## FoobarType
+```
+
+```julia
+newfoo.a
+```
+
+```
+## 1.3
+```
+
+This lets the compiler generate efficient code because it knows the types of the fields when you construct a `FoobarType`
+
+Declaring abstract types isn't good enough, you need to declare concrete types
+
+--
+
+Or do we?
+
+---
+
+# Parametric types are what help deliver flexibility
+
+We can create types that hold different types of fields by declaring subsets of abstract types
+
+
+```julia
+struct FooParam{t1 &lt;: Real, t2 &lt;: Real, t3 &lt;: AbstractArray{&lt;:Real}}
+  a::t1
+  b::t2
+  c::t3 
+end
+newfoo_para = FooParam(1.0, 7, [1., 4., 6.])
+```
+
+```
+## FooParam{Float64,Int64,Array{Float64,1}}(1.0, 7, [1.0, 4.0, 6.0])
+```
+
+--
+
+The curly brackets declare all the different type subsets we will use in `FooParam`
+
+--
+
+This actually delivers high performance code!
+
+---
+
+# Smart use of existing Julia functions delivers flexibility
+
+We want to make sure types are stable but code is flexible
+
+Ex: if want to preallocate an array to store data, how do we know how to declare it's type?
+
+--
+
+We don't need to
+
+--
+
+
+```julia
+using LinearAlgebra               # necessary for I
+function sametypes(x)
+  y = similar(x)                  # creates an array that is `similar` to x, use this for preallocating
+  z = I                           # creates a scalable identity matrix
+  q = ones(eltype(x), length(x))  # one is a type generic array of ones, fill creates the array of length(x)
+  y .= z * x + q
+  return y
+end
+```
+
+```
+## sametypes (generic function with 1 method)
+```
+
+```julia
+
+x = [5.5, 7.0, 3.1];
+y = [7, 8, 9];
+```
+
+--
+
+We did not declare any types but the function is type stable
+
+---
+
+# Smart use of existing Julia functions delivers flexibility
+
+
+```julia
+sametypes(x)
+```
+
+```
+## 3-element Array{Float64,1}:
+##  6.5
+##  8.0
+##  4.1
+```
+
+```julia
+sametypes(y)
+```
+
+```
+## 3-element Array{Int64,1}:
+##   8
+##   9
+##  10
+```
+
+--
+
+There's a lot of other functions out there that help with writing flexible, type stable code
+
+---
+
+# Multiple dispatch
+
+Neat thing about Julia: the same function name can perform different operations depending on the underlying type of the inputs
+
+A function specifies different **methods**, each of which operates on a specific set of types
+
+`/` has 103 different methods depending on the input types, these are 103 specialized sets of codes
+
+
+```julia
+methods(/)
+```
+
+```
+## # 103 methods for generic function "/":
+## [1] /(a::Float16, b::Float16) in Base at float.jl:392
+## [2] /(x::Float32, y::Float32) in Base at float.jl:400
+## [3] /(x::Float64, y::Float64) in Base at float.jl:401
+## [4] /(z::Complex{Float64}, w::Complex{Float64}) in Base at complex.jl:360
+## [5] /(::Missing, ::Missing) in Base at missing.jl:96
+## [6] /(::Missing, ::Number) in Base at missing.jl:97
+## [7] /(x::BigInt, y::BigInt) in Base.GMP at gmp.jl:407
+## [8] /(x::BigInt, y::Union{Int16, Int32, Int64, Int8, UInt16, UInt32, UInt64, UInt8}) in Base.GMP at gmp.jl:456
+## [9] /(x::BigFloat, c::BigInt) in Base.MPFR at mpfr.jl:457
+## [10] /(x::BigFloat, y::BigFloat) in Base.MPFR at mpfr.jl:414
+## [11] /(x::BigFloat, c::Union{UInt16, UInt32, UInt64, UInt8}) in Base.MPFR at mpfr.jl:421
+## [12] /(x::BigFloat, c::Union{Int16, Int32, Int64, Int8}) in Base.MPFR at mpfr.jl:433
+## [13] /(x::BigFloat, c::Union{Float16, Float32, Float64}) in Base.MPFR at mpfr.jl:445
+## [14] /(x::Union{Int128, Int16, Int32, Int64, Int8, UInt128, UInt16, UInt32, UInt64, UInt8}, y::Union{Int128, Int16, Int32, Int64, Int8, UInt128, UInt16, UInt32, UInt64, UInt8}) in Base at int.jl:59
+## [15] /(x::Union{Int16, Int32, Int64, Int8, UInt16, UInt32, UInt64, UInt8}, y::BigInt) in Base.GMP at gmp.jl:457
+## [16] /(x::T, y::T) where T&lt;:Integer in Base at int.jl:57
+## [17] /(x::Rational, y::Complex{#s72} where #s72&lt;:Union{Integer, Rational}) in Base at rational.jl:264
+## [18] /(a::R, z::S) where {R&lt;:Real, S&lt;:Complex} in Base at complex.jl:323
+## [19] /(z::Complex, x::Real) in Base at complex.jl:324
+## [20] /(z::Complex{T}, w::Complex{T}) where T&lt;:Union{Float16, Float32} in Base at complex.jl:350
+## [21] /(a::Complex{T}, b::Complex{T}) where T&lt;:Real in Base at complex.jl:327
+## [22] /(x::Rational, y::Rational) in Base at rational.jl:263
+## [23] /(c::Union{UInt16, UInt32, UInt64, UInt8}, x::BigFloat) in Base.MPFR at mpfr.jl:426
+## [24] /(c::Union{Int16, Int32, Int64, Int8}, x::BigFloat) in Base.MPFR at mpfr.jl:438
+## [25] /(c::Union{Float16, Float32, Float64}, x::BigFloat) in Base.MPFR at mpfr.jl:450
+## [26] /(x::AbstractIrrational, y::AbstractIrrational) in Base at irrationals.jl:133
+## [27] /(x::T, y::T) where T&lt;:Number in Base at promotion.jl:392
+## [28] /(x::Number, y::Number) in Base at promotion.jl:316
+## [29] /(x::Base.TwicePrecision, v::Number) in Base at twiceprecision.jl:301
+## [30] /(x::Base.TwicePrecision, y::Base.TwicePrecision) in Base at twiceprecision.jl:305
+## [31] /(r::StepRangeLen{#s72,#s71,S} where S where #s71&lt;:Base.TwicePrecision where #s72&lt;:Real, x::Real) in Base at twiceprecision.jl:482
+## [32] /(B::BitArray, x::Number) in Base at bitarray.jl:1103
+## [33] /(X::Union{DenseArray{P,N}, ReinterpretArray{P,N,S,A} where S where A&lt;:Union{SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray}, ReshapedArray{P,N,A,MI} where MI&lt;:Tuple{Vararg{SignedMultiplicativeInverse{Int64},N} where N} where A&lt;:Union{ReinterpretArray{T,N,S,A} where S where A&lt;:Union{SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray} where N where T, SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray}, SubArray{P,N,A,I,L} where L where I&lt;:Tuple{Vararg{Union{Int64, AbstractRange{Int64}, AbstractCartesianIndex},N} where N} where A&lt;:Union{ReinterpretArray{T,N,S,A} where S where A&lt;:Union{SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray} where N where T, ReshapedArray{T,N,A,MI} where MI&lt;:Tuple{Vararg{SignedMultiplicativeInverse{Int64},N} where N} where A&lt;:Union{ReinterpretArray{T,N,S,A} where S where A&lt;:Union{SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray} where N where T, SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray} where N where T, DenseArray}} where N, y::Real) where P&lt;:Dates.Period in Dates at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/Dates/src/deprecated.jl:46
+## [34] /(A::SymTridiagonal, B::Number) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/tridiag.jl:162
+## [35] /(A::Tridiagonal, B::Number) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/tridiag.jl:621
+## [36] /(A::UpperTriangular, x::Number) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:690
+## [37] /(A::UnitUpperTriangular, x::Number) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:693
+## [38] /(A::LowerTriangular, x::Number) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:690
+## [39] /(A::UnitLowerTriangular, x::Number) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:693
+## [40] /(A::Symmetric, x::Number) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/symmetric.jl:455
+## [41] /(A::Hermitian, x::Real) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/symmetric.jl:456
+## [42] /(D::Diagonal, x::Number) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/diagonal.jl:161
+## [43] /(A::Bidiagonal, B::Number) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/bidiag.jl:324
+## [44] /(x::Union{SubArray{T,1,#s623,Tuple{Slice{OneTo{Int64}},Int64},false} where #s623&lt;:SparseMatrixCSC, SparseVector{T,Ti} where Ti&lt;:Integer} where T, a::Number) in SparseArrays at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/SparseArrays/src/sparsevector.jl:1397
+## [45] /(A::AbstractArray, B::Number) in Base at arraymath.jl:55
+## [46] /(A::Union{BitArray{2}, BitArray{1}}, B::Union{BitArray{2}, BitArray{1}}) in Base at bitarray.jl:1100
+## [47] /(x::Number, B::BitArray) in Base at bitarray.jl:1104
+## [48] /(::Number, ::Missing) in Base at missing.jl:98
+## [49] /(x::P, y::P) where P&lt;:Dates.Period in Dates at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/Dates/src/periods.jl:80
+## [50] /(x::P, y::Real) where P&lt;:Dates.Period in Dates at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/Dates/src/periods.jl:81
+## [51] /(X::Union{DenseArray{P,N}, ReinterpretArray{P,N,S,A} where S where A&lt;:Union{SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray}, ReshapedArray{P,N,A,MI} where MI&lt;:Tuple{Vararg{SignedMultiplicativeInverse{Int64},N} where N} where A&lt;:Union{ReinterpretArray{T,N,S,A} where S where A&lt;:Union{SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray} where N where T, SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray}, SubArray{P,N,A,I,L} where L where I&lt;:Tuple{Vararg{Union{Int64, AbstractRange{Int64}, AbstractCartesianIndex},N} where N} where A&lt;:Union{ReinterpretArray{T,N,S,A} where S where A&lt;:Union{SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray} where N where T, ReshapedArray{T,N,A,MI} where MI&lt;:Tuple{Vararg{SignedMultiplicativeInverse{Int64},N} where N} where A&lt;:Union{ReinterpretArray{T,N,S,A} where S where A&lt;:Union{SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray} where N where T, SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray} where N where T, DenseArray}} where N, y::P) where P&lt;:Dates.Period in Dates at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/Dates/src/deprecated.jl:46
+## [52] /(u::Adjoint{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Transpose{#s623,#s622} where #s622&lt;:Union{LowerTriangular, UpperTriangular} where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:2502
+## [53] /(u::Adjoint{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Transpose{#s623,#s622} where #s622&lt;:Union{UnitLowerTriangular, UnitUpperTriangular} where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:2503
+## [54] /(u::Adjoint{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Transpose{#s623,#s622} where #s622&lt;:(AbstractArray{T,2} where T) where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/adjtrans.jl:234
+## [55] /(u::Adjoint{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Union{LowerTriangular, UpperTriangular}) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:2497
+## [56] /(u::Adjoint{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Union{UnitLowerTriangular, UnitUpperTriangular}) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:2498
+## [57] /(u::Adjoint{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Adjoint{#s623,#s622} where #s622&lt;:Union{LowerTriangular, UpperTriangular} where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:2500
+## [58] /(u::Adjoint{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Adjoint{#s623,#s622} where #s622&lt;:Union{UnitLowerTriangular, UnitUpperTriangular} where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:2501
+## [59] /(u::Adjoint{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::AbstractArray{T,2} where T) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/adjtrans.jl:232
+## [60] /(u::Transpose{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Adjoint{#s623,#s622} where #s622&lt;:Union{LowerTriangular, UpperTriangular} where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:2508
+## [61] /(u::Transpose{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Adjoint{#s623,#s622} where #s622&lt;:Union{UnitLowerTriangular, UnitUpperTriangular} where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:2509
+## [62] /(u::Transpose{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Adjoint{#s623,#s622} where #s622&lt;:(AbstractArray{T,2} where T) where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/adjtrans.jl:235
+## [63] /(u::Transpose{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Union{LowerTriangular, UpperTriangular}) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:2505
+## [64] /(u::Transpose{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Union{UnitLowerTriangular, UnitUpperTriangular}) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:2506
+## [65] /(u::Transpose{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Transpose{#s623,#s622} where #s622&lt;:Union{LowerTriangular, UpperTriangular} where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:2510
+## [66] /(u::Transpose{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::Transpose{#s623,#s622} where #s622&lt;:Union{UnitLowerTriangular, UnitUpperTriangular} where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:2511
+## [67] /(u::Transpose{T,#s623} where #s623&lt;:(AbstractArray{T,1} where T) where T, A::AbstractArray{T,2} where T) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/adjtrans.jl:233
+## [68] /(A::LowerTriangular, B::LowerTriangular) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1685
+## [69] /(A::LowerTriangular, B::UnitLowerTriangular) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1692
+## [70] /(A::UpperTriangular, B::UpperTriangular) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1699
+## [71] /(A::UpperTriangular, B::UnitUpperTriangular) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1706
+## [72] /(A::LowerTriangular, xformB::Adjoint{#s623,#s622} where #s622&lt;:UpperTriangular where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1720
+## [73] /(A::LowerTriangular, xformB::Adjoint{#s621,#s620} where #s620&lt;:UnitUpperTriangular where #s621) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1729
+## [74] /(A::UpperTriangular, xformB::Adjoint{#s619,#s618} where #s618&lt;:LowerTriangular where #s619) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1738
+## [75] /(A::UpperTriangular, xformB::Adjoint{#s617,#s616} where #s616&lt;:UnitLowerTriangular where #s617) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1747
+## [76] /(A::LowerTriangular, xformB::Transpose{#s623,#s622} where #s622&lt;:UpperTriangular where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1720
+## [77] /(A::LowerTriangular, xformB::Transpose{#s621,#s620} where #s620&lt;:UnitUpperTriangular where #s621) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1729
+## [78] /(A::UpperTriangular, xformB::Transpose{#s619,#s618} where #s618&lt;:LowerTriangular where #s619) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1738
+## [79] /(A::UpperTriangular, xformB::Transpose{#s617,#s616} where #s616&lt;:UnitLowerTriangular where #s617) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1747
+## [80] /(A::AbstractArray{T,1} where T, B::Union{UnitLowerTriangular, UnitUpperTriangular}) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1876
+## [81] /(A::AbstractArray{T,1} where T, adjB::Adjoint{#s623,#s622} where #s622&lt;:Union{UnitLowerTriangular, UnitUpperTriangular} where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1883
+## [82] /(A::AbstractArray{T,1} where T, transB::Transpose{#s621,#s620} where #s620&lt;:Union{UnitLowerTriangular, UnitUpperTriangular} where #s621) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1891
+## [83] /(A::AbstractArray{T,1} where T, B::Union{LowerTriangular, UpperTriangular}) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1902
+## [84] /(A::AbstractArray{T,1} where T, adjB::Adjoint{#s623,#s622} where #s622&lt;:Union{LowerTriangular, UpperTriangular} where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1909
+## [85] /(A::AbstractArray{T,1} where T, transB::Transpose{#s621,#s620} where #s620&lt;:Union{LowerTriangular, UpperTriangular} where #s621) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1917
+## [86] /(A::AbstractArray{T,2} where T, B::Union{UnitLowerTriangular, UnitUpperTriangular}) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1876
+## [87] /(A::AbstractArray{T,2} where T, adjB::Adjoint{#s623,#s622} where #s622&lt;:Union{UnitLowerTriangular, UnitUpperTriangular} where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1883
+## [88] /(A::AbstractArray{T,2} where T, transB::Transpose{#s621,#s620} where #s620&lt;:Union{UnitLowerTriangular, UnitUpperTriangular} where #s621) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1891
+## [89] /(A::AbstractArray{T,2} where T, B::Union{LowerTriangular, UpperTriangular}) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1902
+## [90] /(A::AbstractArray{T,2} where T, adjB::Adjoint{#s623,#s622} where #s622&lt;:Union{LowerTriangular, UpperTriangular} where #s623) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1909
+## [91] /(A::AbstractArray{T,2} where T, transB::Transpose{#s621,#s620} where #s620&lt;:Union{LowerTriangular, UpperTriangular} where #s621) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/triangular.jl:1917
+## [92] /(Da::Diagonal, Db::Diagonal) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/diagonal.jl:306
+## [93] /(A::Union{AbstractTriangular, Union{DenseArray{T,2}, ReinterpretArray{T,2,S,A} where S where A&lt;:Union{SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray}, ReshapedArray{T,2,A,MI} where MI&lt;:Tuple{Vararg{SignedMultiplicativeInverse{Int64},N} where N} where A&lt;:Union{ReinterpretArray{T,N,S,A} where S where A&lt;:Union{SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray} where N where T, SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray}, SubArray{T,2,A,I,L} where L where I&lt;:Tuple{Vararg{Union{Int64, AbstractRange{Int64}, AbstractCartesianIndex},N} where N} where A&lt;:Union{ReinterpretArray{T,N,S,A} where S where A&lt;:Union{SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray} where N where T, ReshapedArray{T,N,A,MI} where MI&lt;:Tuple{Vararg{SignedMultiplicativeInverse{Int64},N} where N} where A&lt;:Union{ReinterpretArray{T,N,S,A} where S where A&lt;:Union{SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray} where N where T, SubArray{T,N,A,I,true} where I&lt;:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A&lt;:DenseArray where N where T, DenseArray} where N where T, DenseArray}} where T}, D::Diagonal) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/diagonal.jl:378
+## [94] /(A::Bidiagonal{T,V} where V&lt;:AbstractArray{T,1}, adjB::Adjoint{#s623,#s622} where #s622&lt;:AbstractArray{T,1} where #s623) where T in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/bidiag.jl:508
+## [95] /(A::Bidiagonal{T,V} where V&lt;:AbstractArray{T,1}, B::AbstractArray{T,1}) where T in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/bidiag.jl:507
+## [96] /(A::Union{AbstractArray{T,1}, AbstractArray{T,2}} where T, B::Union{AbstractArray{T,1}, AbstractArray{T,2}} where T) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/generic.jl:911
+## [97] /(x::Number, v::AbstractArray{T,1} where T) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/generic.jl:914
+## [98] /(B::AbstractArray{T,2} where T, A::LU) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/lu.jl:627
+## [99] /(J1::UniformScaling, J2::UniformScaling) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/uniformscaling.jl:154
+## [100] /(J::UniformScaling, A::AbstractArray{T,2} where T) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/uniformscaling.jl:155
+## [101] /(A::AbstractArray{T,2} where T, J::UniformScaling) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/uniformscaling.jl:156
+## [102] /(J::UniformScaling, x::Number) in LinearAlgebra at /Users/osx/buildbot/slave/package_osx64/build/usr/share/julia/stdlib/v1.1/LinearAlgebra/src/uniformscaling.jl:158
+## [103] /(x::RObject, y::RObject) in RCall at /Users/ir229/.julia/packages/RCall/RPlFw/src/operators.jl:6
+```
+
+
+---
+  
+# Coding practices etc
+
+See [JuliaPraxis](https://github.com/JuliaPraxis) for best practices for naming, spacing, comments, etc
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "julia",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+(function() {
+  var i, text, code, codes = document.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+})();
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
