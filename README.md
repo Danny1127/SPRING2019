@@ -10,4 +10,4 @@ Lectures can be found here
 Week 1/2: [Intro to Computation](https://github.com/AEM7130/SPRING2019/blob/master/lecture_notes/1_introduction.ipynb)  
 Week 2: [Intro to Coding and Julia](https://rawcdn.githack.com/AEM7130/SPRING2019/6754a0a5ff972b02a991e4238ada2a30f0e627c6/lecture_notes/2a_coding.html)  
 Week 2/3: [Intro to Git and Version Control](https://rawcdn.githack.com/AEM7130/SPRING2019/6754a0a5ff972b02a991e4238ada2a30f0e627c6/lecture_notes/2b_git.html)  
-Week 4/5: Optimization
+Week 3/4: Optimization
