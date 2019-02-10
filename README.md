@@ -14,6 +14,6 @@ Problem set submissions: push your homeworks to your group's repo by the due dat
 To read the first lecture note correctly on your own you'll want to install the [RISE plugin](https://github.com/damianavila/RISE) (will be converted to RMarkdown in the future).
 
 Week 1/2: [Intro to Computation](https://github.com/AEM7130/SPRING2019/blob/master/lecture_notes/1_introduction.ipynb)  
-Week 2: [Intro to Coding and Julia](https://rawcdn.githack.com/AEM7130/SPRING2019/6754a0a5ff972b02a991e4238ada2a30f0e627c6/lecture_notes/2a_coding.html)  
-Week 2/3: [Intro to Git and Version Control](https://rawcdn.githack.com/AEM7130/SPRING2019/6754a0a5ff972b02a991e4238ada2a30f0e627c6/lecture_notes/2b_git.html)  
+Week 2: [Intro to Coding and Julia](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/2a_coding.html)  
+Week 2/3: [Intro to Git and Version Control](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/2b_git.html)  
 Week 3/4: Optimization
