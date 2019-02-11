@@ -315,6 +315,14 @@ You're done! **Now create and clone your own repository, initialized with a `REA
 
 ---
 
+# The flow of Git
+
+<div align="center">
+  <img src="figures/git_flow.png" height=450>
+</div>
+
+---
+
 # Using Git
 
 There are only a few basic Git operations you need to know for versioning solo economics research efficiently
@@ -339,14 +347,6 @@ There are only a few basic Git operations you need to know for versioning solo e
 **Pull:** This takes changes on the remote and integrates them with the local repository (technically two operations are going on: fetch and merge)
   - `git pull origin master` Integrates the changes on the `master` branch of your remote `origin` into your local repo (again, can often omit `origin master`)
 
-
----
-
-# The flow of Git
-
-<div align="center">
-  <img src="figures/git_flow.png" height=450>
-</div>
   
 ---
 
@@ -463,7 +463,7 @@ It turns out that the second person can't push their local changes to the remote
 
 ---
 
-# Get up to date by pulling after you commit your local changes
+# Update by pulling after you commit local changes
 
 You need to pull the remote changes first, but then you get the following message:
 
@@ -471,7 +471,7 @@ You need to pull the remote changes first, but then you get the following messag
   <img src="figures/merge_conflict.png" height=300>
 </div>
 
-And we got a `Merge conflict in README.md`
+And we got a **merge conflict** in `README.md`
 
 ---
 
@@ -524,6 +524,17 @@ Fixed!
 
 ---
 
+# Git help pages are excellent, so is StackExchange
+
+```{bash,eval = FALSE}
+git help add
+```
+<div align="center">
+  <img src="figures/git_help.png" height=525>
+</div>
+
+---
+
 # Windows users!!!!!
 
 ## Do the following:
@@ -535,16 +546,9 @@ git config --global core.eol lf
 git config --global core.autocrlf false
 ```
 
----
+--
 
-# Git help pages are helpful!
-
-```{bash,eval = FALSE}
-git help add
-```
-<div align="center">
-  <img src="figures/git_help.png" height=525>
-</div>
+Git tracks changes by specific characters at the end of each line, it does this differently across Windows/Unix by default
 
 ---
 

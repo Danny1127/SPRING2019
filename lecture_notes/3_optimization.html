@@ -173,9 +173,7 @@ Then `\(f_i(x) \geq 0\)` since `\(x_i &gt; a_i\)`, but we can't guarantee that `
 
 ---
 
-# Basic non-linear rootfinders
-
-## The bisection method
+# Basic non-linear rootfinders: Bisection method
 
 What does the intermediate value theorem tell us?
 
@@ -190,7 +188,8 @@ How can this motivate an algorithm to find the root of a function?
 
 --
 
-If we have a continuous, 1 variable function that is positive at some value and negative at another, a root must fall in between those values
+If we have a continuous, 1 variable function that is positive at some value and negative at another,  
+a root must fall in between those values
 
 --
 
@@ -199,6 +198,10 @@ We know a root exists by IVT, what's an efficient way to find it?
 --
 
 Continually bisect the interval!
+
+--
+
+How would the algorithm be written?
 
 ---
 
@@ -363,6 +366,10 @@ Since we can recast fixed points as rootfinding problems we can use function ite
 
 --
 
+How would you code up a function iteration problem?
+
+--
+
 Function iteration is pretty simple to implement
 
 
@@ -411,7 +418,7 @@ function_iteration(f, 2.)
 ## Intermediate guess of 0.9986471128909702.
 ## Intermediate guess of 1.0006771306930664.
 ## Intermediate guess of 0.9996616064962437.
-##   0.001884 seconds (861 allocations: 233.508 KiB)
+##   0.002010 seconds (861 allocations: 233.508 KiB)
 ## The fixed point of f(x) is at 1.0001692397053021.
 ```
 
@@ -468,7 +475,7 @@ Start with an initial guess of the root at `\(x^{(0)}\)`
 
 --
 
-Approximate the non-linear function with its first-order Taylor expansion about $x^{(0)} $
+Approximate the non-linear function with its first-order Taylor expansion about `\(x^{(0)}\)`
 
 --
 
@@ -517,11 +524,7 @@ function newtons_method(f, f_prime, guess)
         x_old = x
     end
     println("The root of f(x) is at $x.")
-end
-```
-
-```
-## newtons_method (generic function with 1 method)
+end;
 ```
 
 ---
@@ -530,22 +533,8 @@ end
 
 
 ```julia
-f(x) = x^3
-```
-
-```
-## f (generic function with 1 method)
-```
-
-```julia
-f_prime(x) = 3x^2
-```
-
-```
-## f_prime (generic function with 1 method)
-```
-
-```julia
+f(x) = x^3;
+f_prime(x) = 3x^2;
 newtons_method(f, f_prime, 1.)
 ```
 
@@ -557,22 +546,8 @@ newtons_method(f, f_prime, 1.)
 
 
 ```julia
-f(x) = sin(x)
-```
-
-```
-## f (generic function with 1 method)
-```
-
-```julia
-f_prime(x) = cos(x)
-```
-
-```
-## f_prime (generic function with 1 method)
-```
-
-```julia
+f(x) = sin(x);
+f_prime(x) = cos(x);
 newtons_method(f, f_prime, pi/4)
 ```
 
@@ -590,7 +565,7 @@ If `\(f(x)\)` is continuously differentiable, the initial guess is "sufficiently
 
 --
 
-What is "sufficiently close"
+What is "sufficiently close"?
 
 --
 
@@ -631,7 +606,7 @@ Our new iteration rule then becomes
 
 --
 
-`\(x^{(k+1)} = x^{(k)} - \frac{x^{(k)}-x_{k-1}}{f(x^{(k)})-f(x_{k-1})}f(x^{(k)})\)`
+`\(x^{(k+1)} = x^{(k)} - \frac{x^{(k)}-x^{(k-1)}}{f(x^{(k)})-f(x^{(k-1)})}f(x^{(k)})\)`
 
 --
 
@@ -661,7 +636,7 @@ We must initially provide a guess of the root, `\(x^{(0)}\)`, but also a guess o
 
 --
 
-Root guess update is the same as before but with our guess of the Jacobian
+Root guess update is the same as before but with our guess of the Jacobian substituted in for the actual Jacobian or the finite difference approximation
 
 `\(\mathbf{x^{(k+1)}} = \mathbf{x^{(k)}} - A_{(k)}^{-1} \, f(\mathbf{x^{(k)}}).\)`
 
@@ -684,9 +659,9 @@ The updated differences in root guesses, and the function value at those root gu
 
 Why update the Jacobian and then invert when we can just update an inverted Jacobian `\(B = A^{-1}\)`
 
-`\(B^{(k+1)} = B_{k} + \frac{[d^{(k)} - u^{(k)}]{d^{(k)}}^TB^{(k)}}{{d^{(k)}}^T u^{(k)}}\)`
+`\(B_{(k+1)} = B_{(k)} + \frac{[d^{(k)} - u^{(k)}]{d^{(k)}}^TB_{(k)}}{{d^{(k)}}^T u^{(k)}}\)`
 
-where `\(d^{(k)} = (\mathbf{x^{(k+1)}} - \mathbf{x^{(k)}})\)`, and `\(u^{(k)} = B^{(k)}\left[f(\mathbf{x^{(k+1)}})-f(\mathbf{x^{(k)}})\right]\)`.
+where `\(d^{(k)} = (\mathbf{x^{(k+1)}} - \mathbf{x^{(k)}})\)`, and `\(u^{(k)} = B_{(k)}\left[f(\mathbf{x^{(k+1)}})-f(\mathbf{x^{(k)}})\right]\)`.
 
 --
 
@@ -721,6 +696,8 @@ If `\(C &lt; 1\)` and `\(p = 1\)`, the rate of convergence is linear. If `\(1 &l
 
 How fast do the methods we've seen converge?
 
+--
+
 - Bisection: linear rate with `\(C = 0.5\)` (kind of obvious once you see it)
 
 --
@@ -733,7 +710,7 @@ How fast do the methods we've seen converge?
 
 --
 
-- Newton: quadratic rate
+- Newton: `\(p = 2\)`
 
 ---
 
@@ -815,7 +792,7 @@ No trade `\(\rightarrow\)` equilibrium condition is  `\(E_i(p_i) = 0\)` in all r
 
 Trade between regions has marginal transportation cost between regions `\(i\)` and `\(j\)` of `\(c_{ij}\)`
 
-- `\(x_{ij}\)`: the amount of the good traded from region `\(i\)` to region `\(j\)`
+- `\(x_{ij}\)`: the amount of the good shipped from region `\(i\)` to region `\(j\)`
 - capacity constraint: `\(b_{ij}\)`
 
 ---
@@ -826,7 +803,7 @@ Marginal arbitrage profit from shipping a unit of the good from `\(i\)` to `\(j\
 
 --
 
-If it's positive: incentive to ship more goods to region `\(j\)` from region `\(i\)`
+If it's positive: incentive to ship more goods to region `\(i\)` from region `\(j\)`
 
 If it's negative: incentive to decrease shipments
 
@@ -852,7 +829,7 @@ At an equilibrium only if all the arbitrage opportunities are gone: for all regi
 
 --
 
-How do we formulate this as a complementarity problem? 
+How do we formulate this as a complementarity problem? First we need market clearing in each region `\(i\)`
 
 --
 
@@ -860,20 +837,27 @@ How do we formulate this as a complementarity problem?
 
 This implies that we can solve for the price in region `\(i\)`,
 
-`$$p_i = E_i^{-1}\left( \sum_k [x_{ki} - x_{ik}]\right),$$`
+`$$p_i = E_i^{-1}\left( \sum_k [x_{ki} - x_{ik}]\right)$$`
+---
 
-if
+# Complementarity problems
+
+Finally, if we define marginal arbitrage profit from shipping another unit from `\(i\)` to `\(j\)` as
 
 `$$f_{ij}(x) = E_j^{-1}\left( \sum_k[x_{kj} - x_{jk}] \right) - E_i^{-1}\left( \sum_k[x_{ki} - x_{ik}] \right) - c_{ij}$$`
 
-then `\(x\)` is an equilibrium vector of trade flows if and only if `\(x\)` solves `\(CP(f,0,b)\)` and `\(x\)`, `\(f\)`, and `\(b\)` are `\(n^2\)`x1 vectors. Even this highly complex trade-equilibrium model can be reduced to a simple complementarity problem
+then `\(x\)` is an equilibrium vector of trade flows if and only if `\(x\)` solves `\(CP(f,0,b)\)` and `\(x\)`, `\(f\)`, and `\(b\)` are `\(n^2 \times 1\)`  vectors
+
+Even this complex trade-equilibrium model can be reduced to a simple complementarity problem
 
 ---
 
 # Complementarity problems
 
+Four plots of marginal arbitrage profit `\(f_i(x)\)`, what is the equilibrium choice of `\(x\)`?
+
 &lt;div align="center"&gt;
-  &lt;img src="figures/complementarity.png" height=550&gt;
+  &lt;img src="figures/complementarity.png" height=500&gt;
 &lt;/div&gt;
 
 ---
@@ -915,7 +899,8 @@ Similar to bisection, **golden search** looks for a solution of a one-dimensiona
 
 --
 
-If we have a continuous one dimensional function, `\(f(x)\)`, and we want to find a local minimum in some interval `\([a,b]\)`
+If we have a continuous one dimensional function, `\(f(x)\)`,  
+and we want to find a local minimum in some interval `\([a,b]\)`
 
 
 1. Select points `\(x_1,x_2 \in [a,b]\)` where `\(x_2 &gt; x_1\)`
