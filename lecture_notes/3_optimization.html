@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Numerical Optimization</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Ivan Rudik" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/metropolis.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/metropolis-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Numerical Optimization
+## <html>
+<div style="float:left">
+
+</div>
+<hr color='#459DE0' size=5px width=1100px>
+</html>
+### Ivan Rudik
+### AEM 7130
+
+---
+
+
+# Software and stuff
+
+Necessary things to do:
+
+- Install the QuantEcon Julia package
+- Install the Optim or NLOpt Julia packages
+
+---
+
+# Optimization
+
+All econ problems are optimization problems
+
+--
+
+- Max profits
+
+--
+
+- Min costs
+
+--
+
+- Max PV E[welfare]
+
+--
+
+Some are harder than others:
+
+--
+
+- Individual utility max: easy
+
+--
+
+- Decentralized electricity market with nodal pricing: hard
+
+--
+
+- One input profit maximization problem: easy
+
+--
+
+- N-input profit maximization with learning and forecasts: hard
+
+---
+
+# Things we will do
+
+1. Linear rootfinding
+2. Non-linear rootfinding
+3. Complementarity problems
+4. Non-linear unconstrained maximization/minimization
+5. Non-linear constrained maximization/minimization
+---
+
+# Linear rootfinding
+
+How do we solve these?
+
+--
+
+Consider a simple generic problem:
+
+`\(Ax = b\)`
+
+--
+
+Invert `\(A\)`
+
+`\(x = A^{-1}b\)`
+
+--
+
+The end
+
+---
+
+# Non-linear rootfinding
+
+With non-linear rootfinding problems we want to solve:
+
+`\(f(x) = 0, f:\mathbb{R}\rightarrow\mathbb{R}^n\)`
+
+--
+
+What's a common rootfinding problem?
+
+--
+
+Can we reframe a common economic problem as rootfinding?
+
+--
+
+Yes!
+
+--
+
+Fixed point problems are rootfinding problems:
+
+--
+
+`\(g(x) = x \Rightarrow f(x) \equiv g(x) - x = 0\)`
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "bash",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+(function() {
+  var i, text, code, codes = document.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+})();
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
