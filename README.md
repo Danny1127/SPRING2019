@@ -1,6 +1,10 @@
 # AEM 7130: Spring 2019
 This is the Git repository for the AEM 7130 Spring 2019 course. The repo will contain the syllabus, lecture notes, and problem sets.
 
+## Syllabus
+
+You can find the syllabus [here](https://raw.githack.com/AEM7130/SPRING2019/master/syllabus2019.pdf).
+
 ## Problem sets
 
 Problem set submissions: push your homeworks to your group's repo by the due date. Homeworks must be submitted as a well-commented and executed Jupyter notebook. See [JuliaPraxis](https://github.com/JuliaPraxis) for some best practices on commenting.
