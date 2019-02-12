@@ -21,3 +21,9 @@ Week 1/2: [Intro to Computation](https://github.com/AEM7130/SPRING2019/blob/mast
 Week 2: [Intro to Coding and Julia](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/2a_coding.html)  
 Week 2/3: [Intro to Git and Version Control](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/2b_git.html)  
 Week 3/4: [Optimization](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/3_optimization.html)
+Week 4/5: Discrete Time Dynamics
+Week 5/6: Numerical Methods for Discrete Time Dynamic Models
+
+## Problem sets
+
+[Problem Set 1](https://github.com/AEM7130/SPRING2019/blob/master/problem_sets/1_ps_intro_git.ipynb)
