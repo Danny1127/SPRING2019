@@ -9,6 +9,8 @@ You can find the syllabus [here](https://raw.githack.com/AEM7130/SPRING2019/mast
 
 Problem set submissions: push your homeworks to your group's repo by the due date. Homeworks must be submitted as a well-commented and executed Jupyter notebook. See [JuliaPraxis](https://github.com/JuliaPraxis) for some best practices on commenting.
 
+[Problem Set 1](https://github.com/AEM7130/SPRING2019/blob/master/problem_sets/1_ps_intro_git.ipynb)
+
 ## Final project proposal
 
 [Final project proposal guidelines](https://rawcdn.githack.com/AEM7130/SPRING2019/cba512ce09ddb548999a6417bafe95e7ba7e2c44/final_project/project_proposal.html)
@@ -23,7 +25,3 @@ Week 2/3: [Intro to Git and Version Control](https://raw.githack.com/AEM7130/SPR
 Week 3/4: [Optimization](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/3_optimization.html)  
 Week 4/5: Discrete Time Dynamics  
 Week 5/6: Numerical Methods for Discrete Time Dynamic Models  
-
-## Problem sets
-
-[Problem Set 1](https://github.com/AEM7130/SPRING2019/blob/master/problem_sets/1_ps_intro_git.ipynb)
