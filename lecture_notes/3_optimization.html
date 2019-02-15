@@ -418,7 +418,7 @@ function_iteration(f, 2.)
 ## Intermediate guess of 0.9986471128909702.
 ## Intermediate guess of 1.0006771306930664.
 ## Intermediate guess of 0.9996616064962437.
-##   0.002010 seconds (861 allocations: 233.508 KiB)
+##   0.002035 seconds (861 allocations: 233.508 KiB)
 ## The fixed point of f(x) is at 1.0001692397053021.
 ```
 
@@ -1265,6 +1265,177 @@ Therefore `\(f(x_k + \epsilon p_k) &lt; f(x_k)\)` for positive but sufficiently 
 --
 
 **Is `\(-\nabla\,f_k\)` always the best search direction?**
+
+
+---
+
+# Newton's method
+
+
+The most important search direction is not steepest descent but **Newton's direction**
+
+--
+
+Newton's direction comes out of the second order Taylor series approximation to `\(f(x_k + p)\)`
+`$$f(x_k + p) \approx f_k + p^T\,\nabla\,f_k + \frac{1}{2!}\,p^T\,\nabla^2f_k\,p$$`
+Define this as `\(\mathbf{m_k(p)}\)`
+
+--
+
+We find the Newton direction by selecting the vector `\(p\)` that minimizes `\(f(x_k + p)\)`
+
+--
+
+This ends up being
+`$$p^N_k = -\frac{\nabla f_k}{\nabla^2 f_k}$$`
+
+---
+
+# Newton's method
+
+--
+
+This approximation to the function we are trying to solve has error of `\(O(||p||^3)\)`, so if `\(p\)` is small, the quadratic approximation is very accurate
+
+--
+
+**Drawback:** requires explicit computation of the Hessian, `\(\nabla^2 \, f(x)\)`
+- Quasi-Newton optimizers also exist (e.g. BFGS, L-BFGS, etc)
+
+
+---
+
+# Conjugate gradient methods
+
+Conjugate gradient methods are relatively quick but also very memory efficient
+
+They were originally developed for quadratic objectives but have been expanded to general non-linear functions with lots of success
+
+--
+
+**Conjugate gradient** search methods have search directions of the form
+$$ p_k = - \nabla f(x_k) + \beta_k p_{k-1}$$
+
+--
+
+`\(\beta_k\)` is a scalar that ensures `\(p_k\)` and `\(p_{k-1}\)` are *conjugate*: $p_k^T 
+
+---
+
+# Trust region methods
+
+Trust region methods construct an approximating model, `\(m_k\)`, whose behavior near the current iterate `\(x_k\)` is close to that of the actual function `\(f\)`
+
+--
+
+We then search for a minimizer of `\(m_k\)`
+
+--
+
+**Issue:** `\(m_k\)` may not represent `\(f\)` well when far away from the current iterate `\(x_k\)`
+
+--
+
+**Solution:** Restrict the search for a minimizer to be within some region of `\(x_k\)`, called a **trust region**
+
+--
+
+Trust region problems can be formulated as
+`$$\min_p m_k(x_k + p)$$`
+where 
+- `\(x_k+p \in \Gamma\)`
+- `\(\Gamma\)` is a ball defined by `\(||p||_2 \leq \Delta\)`
+- `\(\Delta\)` is called the trust region radius
+
+---
+
+# Trust region Methods
+
+Typically the approximating model `\(m_k\)` is a quadratic function (i.e. a second-order Taylor approximation)
+`$$m_k(x_k + p) = f_k + p^T\,\nabla\,f_k + \frac{1}{2!}\,p^T\,B_k\,p$$`
+where `\(B_k\)` is the Hessian or an approximation to the Hessian
+
+&lt;div align="center"&gt;
+  &lt;img src="figures/trust_region.png" height=400&gt;
+&lt;/div&gt;
+
+---
+
+# Line search vs trust region
+
+Whats the fundamental difference between line search and trust region? 
+
+--
+
+Line search first picks a direction then searches along that direction for the optimal step length
+
+Trust region first defines our step length via the trust region radius, then searches for the optimal direction
+
+--
+
+There is a special case of the trust region where if we set `\(B_k\)` to zero, the solution to the problem is 
+`$$p_k = -\frac{\Delta_k \,\nabla \,f_k}{||\nabla\,f_k||}$$`
+
+This is just the steepest descent solution for the line search problem
+
+
+---
+
+# Problem scaling
+
+The **scaling** of a problem matters for optimization performance
+
+--
+
+A problem is **poorly scaled** if changes to `\(x\)` in a certain direction  
+produce much bigger changes in `\(f\)` than changes to in `\(x\)` in another direction
+
+&lt;div align="center"&gt;
+  &lt;img src="figures/poorly_scaled.png" height=400&gt;
+&lt;/div&gt;
+
+---
+
+# Problem scaling
+
+Ex: `\(f(x) = 10^9 x_1^2 + x_2^2\)` is poorly scaled
+
+--
+
+This happens when things change at different rates:
+- Investment rates are between 0 and 1
+- Consumption can be in trillions of dollars
+
+--
+
+How do we solve this issue?
+
+--
+
+Rescale the problem: put them in units that are generally within an order of magnitude of 1
+- Investment rate in percentage terms: `\(0\%-100\%\)`
+- Consumption in units of trillion dollars instead of dollars
+
+--
+
+Some algorithms are more sensitive to poor scaling (steepest descent) than others (Newton)
+
+---
+
+# Constrained optimization
+
+How do we solve constrained optimization problems?
+
+--
+
+Typically as a variant of unconstrained optimization techniques
+
+--
+
+We will discuss three types of constrained optimization algorithms
+- Penalty methods
+- Active set methods
+- Interior point methods
     </textarea>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({
