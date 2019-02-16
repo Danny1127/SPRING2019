@@ -1309,3 +1309,329 @@ We will discuss three types of constrained optimization algorithms
 - Penalty methods
 - Active set methods
 - Interior point methods
+
+---
+
+# Constrained optimization
+
+These are the algorithms in workhorse commercial solvers: KNITRO
+
+<div align="center">
+  <img src="figures/knitro_algos_1.png" height=500>
+</div>
+
+---
+
+# Constrained optimization
+
+These are the algorithms in workhorse commercial solvers: KNITRO
+
+<div align="center">
+  <img src="figures/knitro_algos_2.png" height=500>
+</div>
+
+---
+
+# Constrained optimization
+
+These are the algorithms in workhorse commercial solvers: fmincon/MATLAB
+
+<div align="center">
+  <img src="figures/fmincon_algos.png" height=300>
+</div>
+
+---
+
+# Constrained optimization: Penalty methods
+
+Suppose we wish to minimize some function subject to some function of the control variables equaling some value
+$$\min_x f(x) \,\,\, \text{subject to:} \,\, c_i(x) = 0$$
+
+--
+
+How does the algorithm know to not violate the constraint?
+
+--
+
+One way is to introduce a **penalty function** into our objective and remove the constraint:
+$$Q(x;\mu) = f(x) + \frac{\mu}{2} \sum_i c_i^2(x)$$
+
+where $\mu$ is the penalty parameter
+
+---
+
+# Constrained optimization: Penalty methods
+
+$$Q(x;\mu) = f(x) + \frac{\mu}{2} \sum_i c_i^2(x)$$
+
+--
+
+The second term increases the value of the function, bigger $\mu \rightarrow$ bigger penalty from violating the constraint
+
+--
+
+The penalty terms are smooth $\rightarrow$ use unconstrained optimization techniques to solve the problem by searching for iterates of $x_k$
+
+--
+
+Also generally iterate on sequences of $\mu_k \rightarrow \infty$ as $k \rightarrow \infty$, to require satisfying the constraints as we close in
+
+--
+
+There are also augmented Lagrangian methods that take the quadratic penalty method and add in explicit estimates of Lagrange multipliers to help force binding constraints to bind precisely 
+
+---
+
+# Constrained optimization: Penalty method example
+
+Example:
+$$\min x_1 + x_2 \,\,\,\,\,\text{      subject to:    } \,\,\, x_1^2 + x_2^2 - 2 = 0$$
+
+--
+
+Solution is pretty easy to show to be $(-1, -1)$
+
+--
+
+The penalty method function $Q(x_1, x_2; \mu)$ is
+$$Q(x_1, x_2; \mu) = x_1 + x_2 + \frac{\mu}{2} (x_1^2 + x_2^2 - 2)^2$$
+
+--
+
+Let's ramp up $\mu$ and see what happens to how the function looks
+
+---
+
+# Constrained optimization: Penalty method example
+
+$\mu = 1$, solution is around $(-1.1, -1.1)$
+
+<div align="center">
+  <img src="figures/penalty_method_1.png" height=500>
+</div>
+
+---
+
+# Constrained optimization: Penalty method example
+
+$\mu = 10$, solution is very close to $(-1, -1)$, can easily see trough, and rapid value increase outside $x_1^2 + x_2^2 = 2$
+
+<div align="center">
+  <img src="figures/penalty_method_2.png" height=500>
+</div>
+
+
+
+---
+
+# Constrained optimization: Active set methods
+
+Active set methods encapsulate sequential quadratic programming methods
+
+--
+
+**Main idea:**
+1. Replace the large non-linear constrained problem with a constrained quadratic programming problem  
+2. Use Newton's method to solve the sequence of simpler quadratic problems
+
+--
+
+Tthe Lagrangian is
+$$L(x,\lambda) = f(x) - \lambda^T\,c(x)$$
+
+--
+
+Denote $A(x)^T$ as the Jacobian of the constraints
+$$A(x)^T = [\nabla\,c_1(x),...,\nabla\,c_m(x)]$$
+
+--
+
+The first-order conditions can be written as,
+\begin{gather}
+	\nabla\,f(x) - A(x)^T\,\lambda = 0 \notag\\
+	c(x) = 0 \notag
+\end{gather}
+
+--
+
+Define this system of equations as $F(x,\lambda)$
+
+---
+
+# Constrained optimization: Active set methods
+
+The first-order conditions $F(x,\lambda)$ can be written as,
+\begin{gather}
+	\nabla\,f(x) - A(x)^T\,\lambda = 0 \notag\\
+	c(x) = 0 \notag
+\end{gather}
+
+Any solution to the equality constrained problem, where $A(x^*)$ has full rank also satisfies the first-order necessary conditions
+
+--
+
+Active set methods use New ton's method to find the solution $(x^*, \lambda^*)$ of $F(x,\lambda)$
+
+--
+
+**Issue:** if we have many constraints, keeping track of all of them can be expensive
+
+--
+
+**Main idea:** recognize that if an inequality constraint is not binding, or **active**, then it has no influence on the solution
+
+$\rightarrow$ in the iteration procedure we can effectively ignore it
+
+--
+
+Active set methods find ways to reduce the complexity of the optimization routine by selectively ignoring constraints that are not active (i.e. non-positive Lagrange multipliers) or close to being active
+
+---
+
+# Constrained optimization: Interior point methods
+
+Interior point methods are also called barrier methods
+
+--
+
+These are typically used for inequality constrained problems
+
+--
+
+The name **interior point** comes from the algorithm traversing the domain along the interior of the inequality constraints
+
+--
+
+**Issue:** how do we ensure we are on the interior of the feasible set?
+
+-- 
+
+**Main idea:** impose a *barrier*
+
+---
+
+# Constrained optimization: Interior point methods
+
+Consider the following constrained optimization problem
+\begin{gather}
+	\min_{x} f(x) \notag\\
+	\text{subject to:  } c_E(x) = 0, c_I(x) \geq 0
+\end{gather}
+
+--
+
+Reformulate this problem as
+\begin{gather}
+	\min_{x,s} f(x) \notag\\
+	\text{subject to:  } c_E(x) = 0, c_I(x) - s = 0, s \geq 0
+\end{gather}
+
+where $s$ is a vector of slack variables for the constraints
+
+---
+
+# Constrained optimization: Interior point methods
+
+Final step: introduce a *barrier function* to eliminate the inequality constraint,
+\begin{gather}
+	\min_{x,s} f(x) - \mu \sum_{i=1}^m log(s_i) \notag\\
+	\text{subject to:  } c_E(x) = 0, c_I(x) - s = 0
+\end{gather}
+
+where $\mu$ is a positive barrier parameter
+
+--
+
+The barrier function prevents the components of $s$ from approaching  
+zero by imposing a logarithmic barrier $\rightarrow$ it maintains slack in the constraints
+
+--
+
+Interior point methods solve a sequence of barrier problems until $\{\mu_k\}$ converges to zero
+
+--
+
+The solution to the barrier problem converges to that of the original constrained optimization problem
+
+---
+
+# Best practices for optimization
+
+Plug in your guess, let the solver go, and you're done right?
+
+--
+
+## NO
+
+--
+
+These algorithms are not guaranteed to always find even a local solution, you need to test and make sure you are converging correctly
+
+---
+
+# Check exitflags
+
+Exitflags tell you why the solver stopped, exit flags of 0 or -10X are generally good, anything else is bad
+
+-10X can indicate bad scaling, ill-conditioning, etc
+
+<div align="center">
+  <img src="figures/knitro_exitflags.png" height=450>
+</div>
+
+---
+
+# Try alternative algorithms
+
+Optimization is 53% art
+
+--
+
+Not all algorithms are suited for every problem $\rightarrow$ it is useful  
+to check how different algorithms perform
+
+---
+
+# Be aware of tolerances
+
+Two main tolerances in optimization:
+
+1. `ftol` is the tolerance for the change in the function value (absolute and relative)
+2. `xtol` is the tolerance for the change in the input values (absolute and relative)
+
+--
+
+What is a suitable tolerance?
+
+--
+
+It depends
+
+--
+
+Explore sensitivity to tolerance, typically pick a conservative (small) number
+- Defaults in solvers are usually `1e-6`
+
+--
+
+May be a substantial tradeoff between accuracy of your solution and speed
+
+--
+
+Common bad practice is to pick a larger tolerance (e.g. `1e-3`) so the problem "works" (e.g. so your big MLE converges)
+
+---
+
+# Perturb your initial guesses
+
+**Initial guesses matter**
+
+--
+
+Good ones can improve performance
+- e.g. initial guess for next iteration of coefficient estimates should be current iteration estimates
+
+--
+
+Bad ones can give you terrible performance, or wrong answers if your problem isn't perfect
+- e.g. bad scaling, not well-conditioned, multiple equilibria
