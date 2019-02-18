@@ -418,7 +418,7 @@ function_iteration(f, 2.)
 ## Intermediate guess of 0.9986471128909702.
 ## Intermediate guess of 1.0006771306930664.
 ## Intermediate guess of 0.9996616064962437.
-##   0.002116 seconds (861 allocations: 233.508 KiB)
+##   0.002218 seconds (861 allocations: 233.508 KiB)
 ## The fixed point of f(x) is at 1.0001692397053021.
 ```
 
@@ -718,9 +718,11 @@ How fast do the methods we've seen converge?
 
 Convergence rates only account for the number of **iterations** of the method 
 
-The steps taken in a given iteration of each solution method may vary in computational cost because of differences in the number of arithmetic operations 
+The steps taken in a given iteration of each solution method may vary in computational cost  
+because of differences in the number of arithmetic operations 
 
-Although an algorithm may take more iterations to solve, each iteration may be solved faster and the overall algorithm takes less time
+Although an algorithm may take more iterations to solve,  
+each iteration may be solved faster and the overall algorithm takes less time
 
 --
 
@@ -733,7 +735,21 @@ Ex:
 
 --
 
-Bisection and function iteration are usually slow, Broyden's method can be faster than Newton's method if derivatives are costly to compute
+Bisection and function iteration are usually slow,  
+Broyden's method can be faster than Newton's method if derivatives are costly to compute
+
+---
+
+# Convergence speed
+
+Consider an example where `\(f(x) = x - sqrt(x) = 0\)`
+
+What does convergence look like across our main approaches in terms of the `\(L^1-\)`norm if all guesses start at `\(x^{(0)} = 0.5\)`?
+
+&lt;div align="center"&gt;
+  &lt;img src="figures/rootfinder_speed.png" height=400&gt;
+&lt;/div&gt;
+
 
 ---
 
@@ -747,15 +763,19 @@ Let:
 
 --
 
-There are disequilibrium profit opportunities if either `\(x_i &lt; b_i\)` and `\(f_i(x) &gt; 0\)` (here we can increase profits by raising `\(x_i\)`) or if `\(x_i &gt; a_i\)` and `\(f_i(x) &lt; 0\)` (we can increase profits by decreasing `\(x_i\)`)
+There are disequilibrium profit opportunities if 
+1. `\(x_i &lt; b_i\)` and `\(f_i(x) &gt; 0\)` (here we can increase profits by raising `\(x_i\)`)
+2. `\(x_i &gt; a_i\)` and `\(f_i(x) &lt; 0\)` (we can increase profits by decreasing `\(x_i\)`)
 
---
+---
+
+# Complementarity problems
 
 We obtain a no-arbitrage equilibrium if and only if `\(x\)` solves the complementary problem `\(CP(f,a,b)\)`
 
 --
 
-We can write out the problem as finding a vector `\(x \in [a,b]\)` that solves,
+We can write out the problem as finding a vector `\(x \in [a,b]\)` that solves
 `\begin{align}
 	x_i &gt; a_i \Rightarrow f_i(x) \geq 0 \,\,\, \forall i = 1,...,n \notag\\ 
 	x_i &lt; b_i \Rightarrow f_i(x) \leq 0 \,\,\, \forall i = 1,...,n \notag
@@ -765,7 +785,7 @@ We can write out the problem as finding a vector `\(x \in [a,b]\)` that solves,
 
 At interior solution, the function be precisely be zero
 
-If there is a corner solution at the upper bound `\(b_i\)` for `\(x_i\)`, the function `\(f\)` must be increasing in direction `\(i\)`
+Corner solution at the upper bound `\(b_i\)` for `\(x_i\)` `\(\rightarrow\)` `\(f\)` must be increasing in direction `\(i\)`
 
 The opposite is true if we are at the lower bound
 
@@ -773,20 +793,22 @@ The opposite is true if we are at the lower bound
 
 # Complementarity problems
 
-Economic problems are complementarity problems where we are maximizing a function (e.g. profit) subject to some constraint (e.g. price floors)
+Economic problems are complementarity problems where we are  
+maximizing a function (e.g. profit) subject to some constraint (e.g. price floors)
 
-The Karush-Kuhn-Tucker theorem shows that `\(x\)` solves the constrained optimization problem if and only if it solves the complementarity problem
+The Karush-Kuhn-Tucker theorem shows that `\(x\)` solves the constrained optimization problem  
+if and only if it solves the complementarity problem
 
 --
 
-Single commodity competitive spatial price equilibrium model
+**Example:** single commodity competitive spatial price equilibrium model
 
 - `\(n\)` regions of the world
 - excess demand for the commodity in region `\(i\)` is `\(E_i(p_i)\)`
 
 --
 
-No trade `\(\rightarrow\)` equilibrium condition is  `\(E_i(p_i) = 0\)` in all regions of the world: a simple rootfinding problem
+If no trade `\(\rightarrow\)` equilibrium condition is `\(E_i(p_i) = 0\)` in all regions of the world: a simple rootfinding problem
 
 --
 
@@ -829,11 +851,17 @@ At an equilibrium only if all the arbitrage opportunities are gone: for all regi
 
 --
 
-How do we formulate this as a complementarity problem? First we need market clearing in each region `\(i\)`
+How do we formulate this as a complementarity problem? 
+
+--
+
+Market clearing in each region `\(i\)` requires that net imports = excess demand
 
 --
 
 `$$\sum_k [x_{ki} - x_{ik}] = E_i(p_i)$$`
+
+--
 
 This implies that we can solve for the price in region `\(i\)`,
 
@@ -850,6 +878,13 @@ then `\(x\)` is an equilibrium vector of trade flows if and only if `\(x\)` solv
 
 Even this complex trade-equilibrium model can be reduced to a simple complementarity problem
 
+--
+
+Decentralized models can generally be solved by reducing them to complementarity problems, e.g:
+1. Competitive energy markets with cross-market cap and trade or capacity constraints
+2. Federalism models
+3. etc etc 
+
 ---
 
 # Complementarity problems
@@ -859,6 +894,25 @@ Four plots of marginal arbitrage profit `\(f_i(x)\)`, what is the equilibrium ch
 &lt;div align="center"&gt;
   &lt;img src="figures/complementarity.png" height=500&gt;
 &lt;/div&gt;
+
+---
+
+# How do we solve them?
+
+A complementarity problem `\(CP(f, a, b)\)` can be re-framed as a rootfinding problem easily
+`$$\hat{f}(x) = min(max(f(x),a-x),b-x) = 0$$`
+
+&lt;div align="center"&gt;
+  &lt;img src="figures/complementarity_minmax.png" height=370&gt;
+&lt;/div&gt;
+
+
+We can then solve the problem with conventional rootfinding techniques  
+or approximate this with a smooth function to make it easier on a rootfinder
+
+--
+
+The workhorse solver for complementarity problems is the PATH solver: Julia wrapper can be found [here](https://github.com/chkwon/Complementarity.jl)
 
 ---
 
@@ -876,7 +930,7 @@ FOCs of a constrained maximization problem are just a complementarity problem
 
 --
 
-I'll switch back and forth between maximization and minimization since minimization is how the problems are commonly framed in the optimization literature
+I'll tend to frame problems as minimization problems because it is the convention the optimization literature
 
 --
 
@@ -884,11 +938,19 @@ We make two distinctions:
 
 --
 
-Local vs global: are we finding an optimum in a local region, or globally?
+**Local vs global:** are we finding an optimum in a local region, or globally?
 
 --
 
-Derivative-using vs derivative-free: Do we want to use higher-order information or not?
+**Derivative-using vs derivative-free:** Do we want to use higher-order information or not?
+
+--
+
+I'll focus on local solvers, common global solvers I won't cover:
+1. Genetic algorithms
+2. Simulated annealing
+3. DIRECT
+4. Sto-go
 
 
 ---
@@ -902,9 +964,16 @@ Similar to bisection, **golden search** looks for a solution of a one-dimensiona
 If we have a continuous one dimensional function, `\(f(x)\)`,  
 and we want to find a local minimum in some interval `\([a,b]\)`
 
+--
 
 1. Select points `\(x_1,x_2 \in [a,b]\)` where `\(x_2 &gt; x_1\)`
+
+--
+
 2. If `\(f(x_1) &lt; f(x_2)\)` replace `\([a,b]\)` with `\([a,x_2]\)`, else replace `\([a,b]\)` with `\([x_1,b]\)`
+
+--
+
 3. Repeat until convergence criterion is met
 
 --
@@ -987,19 +1056,22 @@ golden_search(f, -10, 10)
 
 Golden search is nice and simple but only works in one dimension
 
-There are several derivative free methods for minimization that work in multiple dimensions, the most commonly used one is **Nelder-Mead (NM)**
+There are several derivative free methods for minimization that work in multiple dimensions,  
+the most commonly used one is **Nelder-Mead (NM)**
 
 --
 
 NM works by first constructing a simplex: we evaluate the function at `\(n+1\)` points in an `\(n\)` dimensional problem
 
-It then manipulates the highest value point simular to golden search
+It then manipulates the highest value point, similar to golden search
 
 ---
 
 # Nelder-Mead: Simplex
 
-There are six possible operations:
+There are six operations:
+
+--
 
 1. **Order:** order the value at the vertices of the simplex `\(f(x_1)\leq...\leq f(x_{n+1})\)`
 --
@@ -1027,7 +1099,7 @@ There are six possible operations:
   
 --
 
-Nelder-Mead is a pain to code but is in the `Optim.jl` package
+Nelder-Mead is a pain to code efficiently (i.e. don't spend the time doing it yourself) but is in the `Optim.jl` package
 
 
 ---
@@ -1038,7 +1110,7 @@ Nelder-Mead is a pain to code but is in the `Optim.jl` package
   &lt;img src="figures/nelder-mead.png" height=500&gt;
 &lt;/div&gt;
 
-Nelder-Mead is commonly used but slow and unreliable, no real useful convergence properties
+Nelder-Mead is commonly used but slow and unreliable, no real useful convergence properties, avoid using it
 
 ---
 
@@ -1052,7 +1124,8 @@ We typically want to find a global extremum, here a minimum, of our objective fu
 
 --
 
-**Problem:** most algorithms are *local* minimizers that find a point `\(x^*\)` such that `\(f(x^*) \leq f(x)\)` for all `\(x \in N\)`, where `\(N\)` is a neighborhood of `\(x^*\)`
+**Problem:** most algorithms are *local* minimizers that find a point `\(x^*\)`  
+such that `\(f(x^*) \leq f(x)\)` for all `\(x \in N\)`, where `\(N\)` is a neighborhood of `\(x^*\)`
 
 --
 
@@ -1060,13 +1133,13 @@ Typically analytical problems are set up to have a unique minimum so any local s
 
 --
 
-Lots of problems have properties that don't satisfy the typical sufficiency conditions for a minimum (strictly decreasing and convex), like
+Lots of problems have properties that don't satisfy  
+the typical sufficiency conditions for a unique minimum (strictly decreasing and convex), like
 
 --
 
 - Concave transitions
 - Games with multiple equilibria
-- Discontinuous cost functions
 - Etc
 
 --
@@ -1088,7 +1161,8 @@ Optimization algorithms typically have the following set up:
 
 --
 
-If the function is smooth, we can take advantage of that information about the function's shape to figure out which direction to move in next
+If the function is smooth, we can take advantage of that information  
+about the function's shape to figure out which direction to move in next
 
 --
 
@@ -1104,7 +1178,7 @@ Taylor's Theorem tells us that if `\(f\)` is twice differentiable, then there ex
 
 --
 
-From here we can prove the usual necessary and sufficient conditions for a local
+From here we can prove the usual necessary and sufficient conditions for a local optimum
 
 
 
@@ -1116,14 +1190,15 @@ All modern algorithms have that general set up but may go about it in different 
 
 --
 
-Most unconstrained optimization problems fall into one of two classes:
+Most modern optimization problems fall into one of two classes:
 
 1. Line search
 2. Trust region
 
 --
 
-The relationship between these two approaches has a lot of similiarities to the relationship between the primal constrained problem and the dual Lagrange problem
+The relationship between these two approaches has a lot of similiarities  
+to the relationship between the constrained problem and the dual Lagrange problem
 
 ---
 
@@ -1191,17 +1266,13 @@ For any direction `\(p\)` and step length `\(\alpha\)`, we have that
 
 --
 
-What is the rate of change in `\(f\)` along `\(p\)` at `\(x_k\)`?
+The rate of change in `\(f\)` along `\(p\)` at `\(x_k\)` `\((\alpha = 0)\)` is `\(p^T \, \nabla\,f_k\)`
 
 --
 
-The coefficient on `\(\alpha\)` in the second term: `\(p^T \, \nabla\,f_k\)`
+The the unit vector of quickest descent solves
+`$$\min_p p^T\,\nabla\,f_k \,\,\,\,\, \text{subject to:    }||p|| = 1$$`
 
---
-
-`\(\rightarrow\)` the unit vector of quickest descent solves
-`$$\min_p p^T\,\nabla\,f_k,$$`
-subject to `\(||p|| = 1\)`
 
 --
 
@@ -1209,13 +1280,13 @@ Re-express the objective as `\(\min_{\theta,p} ||p||\,||\nabla\,f_k||cos\,\theta
 
 --
 
-The minimum is clearly attained when `\(cos\,\theta = -1\)` and `\(p = -\frac{\nabla\,f_k}{||\nabla\,f_k||},\)` so the direction of steepest descent is simply `\(-\nabla\,f_k\)`
+The minimum is attained when `\(cos\,\theta = -1\)` and `\(p = -\frac{\nabla\,f_k}{||\nabla\,f_k||},\)` so the direction of steepest descent is simply `\(-\nabla\,f_k\)`
 
 ---
 
 # Line search: steepest descent
 
-The *\emph{*steepest descent method* searches along this direction at every iteration `\(k\)`
+The *steepest descent method* searches along this direction at every iteration `\(k\)`
 
 It may select the step length `\(\alpha_k\)` in several different ways
 
@@ -1295,36 +1366,20 @@ This ends up being
 
 --
 
-This approximation to the function we are trying to solve has error of `\(O(||p||^3)\)`, so if `\(p\)` is small, the quadratic approximation is very accurate
+This approximation to the function we are trying to solve has error of `\(O(||p||^3)\)`,  
+so if `\(p\)` is small, the quadratic approximation is very accurate
 
 --
 
 **Drawback:** requires explicit computation of the Hessian, `\(\nabla^2 \, f(x)\)`
-- Quasi-Newton optimizers also exist (e.g. BFGS, L-BFGS, etc)
-
-
----
-
-# Conjugate gradient methods
-
-Conjugate gradient methods are relatively quick but also very memory efficient
-
-They were originally developed for quadratic objectives but have been expanded to general non-linear functions with lots of success
-
---
-
-**Conjugate gradient** search methods have search directions of the form
-$$ p_k = - \nabla f(x_k) + \beta_k p_{k-1}$$
-
---
-
-`\(\beta_k\)` is a scalar that ensures `\(p_k\)` and `\(p_{k-1}\)` are *conjugate*: $p_k^T 
+- Quasi-Newton solvers also exist (e.g. BFGS, L-BFGS, etc)
 
 ---
 
 # Trust region methods
 
-Trust region methods construct an approximating model, `\(m_k\)`, whose behavior near the current iterate `\(x_k\)` is close to that of the actual function `\(f\)`
+Trust region methods construct an approximating model, `\(m_k\)`  
+whose behavior near the current iterate `\(x_k\)` is close to that of the actual function `\(f\)`
 
 --
 
@@ -1373,7 +1428,8 @@ Trust region first defines our step length via the trust region radius, then sea
 
 --
 
-There is a special case of the trust region where if we set `\(B_k\)` to zero, the solution to the problem is 
+There is a special case of the trust region where if we set `\(B_k\)`, the approximate Hessian, to zero,  
+the solution to the problem is 
 `$$p_k = -\frac{\Delta_k \,\nabla \,f_k}{||\nabla\,f_k||}$$`
 
 This is just the steepest descent solution for the line search problem
@@ -1389,6 +1445,8 @@ The **scaling** of a problem matters for optimization performance
 
 A problem is **poorly scaled** if changes to `\(x\)` in a certain direction  
 produce much bigger changes in `\(f\)` than changes to in `\(x\)` in another direction
+
+--
 
 &lt;div align="center"&gt;
   &lt;img src="figures/poorly_scaled.png" height=400&gt;
@@ -1471,12 +1529,12 @@ These are the algorithms in workhorse commercial solvers: fmincon/MATLAB
 
 # Constrained optimization: Penalty methods
 
-Suppose we wish to minimize some function subject to some function of the control variables equaling some value
+Suppose we wish to minimize some function subject to equality constraints (easily generalizes to inequality)
 `$$\min_x f(x) \,\,\, \text{subject to:} \,\, c_i(x) = 0$$`
 
 --
 
-How does the algorithm know to not violate the constraint?
+How does an algorithm know to not violate the constraint?
 
 --
 
@@ -1497,7 +1555,8 @@ The second term increases the value of the function, bigger `\(\mu \rightarrow\)
 
 --
 
-The penalty terms are smooth `\(\rightarrow\)` use unconstrained optimization techniques to solve the problem by searching for iterates of `\(x_k\)`
+The penalty terms are smooth `\(\rightarrow\)` use unconstrained optimization techniques  
+to solve the problem by searching for iterates of `\(x_k\)`
 
 --
 
@@ -1553,7 +1612,7 @@ Let's ramp up `\(\mu\)` and see what happens to how the function looks
 
 # Constrained optimization: Active set methods
 
-Active set methods encapsulate sequential quadratic programming methods
+Active set methods encapsulate sequential quadratic programming (SQP) methods
 
 --
 
@@ -1597,7 +1656,7 @@ Any solution to the equality constrained problem, where `\(A(x^*)\)` has full ra
 
 --
 
-Active set methods use New ton's method to find the solution `\((x^*, \lambda^*)\)` of `\(F(x,\lambda)\)`
+Active set methods use Newton's method to find the solution `\((x^*, \lambda^*)\)` of `\(F(x,\lambda)\)`
 
 --
 
@@ -1611,7 +1670,8 @@ Active set methods use New ton's method to find the solution `\((x^*, \lambda^*)
 
 --
 
-Active set methods find ways to reduce the complexity of the optimization routine by selectively ignoring constraints that are not active (i.e. non-positive Lagrange multipliers) or close to being active
+Active set methods find ways to reduce the complexity of the optimization routine  
+by selectively ignoring constraints that are not active (i.e. non-positive Lagrange multipliers) or close to being active
 
 ---
 
@@ -1631,9 +1691,9 @@ The name **interior point** comes from the algorithm traversing the domain along
 
 **Issue:** how do we ensure we are on the interior of the feasible set?
 
--- 
+--
 
-**Main idea:** impose a *barrier*
+**Main idea:** impose a **barrier** to stop the solver from letting a constraint bind
 
 ---
 
@@ -1659,7 +1719,7 @@ where `\(s\)` is a vector of slack variables for the constraints
 
 # Constrained optimization: Interior point methods
 
-Final step: introduce a *barrier function* to eliminate the inequality constraint,
+Final step: introduce a **barrier function** to eliminate the inequality constraint,
 `\begin{gather}
 	\min_{x,s} f(x) - \mu \sum_{i=1}^m log(s_i) \notag\\
 	\text{subject to:  } c_E(x) = 0, c_I(x) - s = 0
@@ -1688,15 +1748,16 @@ Plug in your guess, let the solver go, and you're done right?
 
 --
 
-## NO
+## WRONG
 
 --
 
-These algorithms are not guaranteed to always find even a local solution, you need to test and make sure you are converging correctly
+These algorithms are not guaranteed to always find even a local solution, 
+you need to test and make sure you are converging correctly
 
 ---
 
-# Check exitflags
+# Check exitflags: KNITRO-specific numbers here
 
 Exitflags tell you why the solver stopped, exit flags of 0 or -10X are generally good, anything else is bad
 
@@ -1710,12 +1771,16 @@ Exitflags tell you why the solver stopped, exit flags of 0 or -10X are generally
 
 # Try alternative algorithms
 
-Optimization is 53% art
+Optimization is approximately 53% art
 
 --
 
-Not all algorithms are suited for every problem `\(\rightarrow\)` it is useful  
-to check how different algorithms perform
+Not all algorithms are suited for every problem `\(\rightarrow\)` it is useful to check how different algorithms perform
+
+--
+
+Interior-point is usually the default in constrained optimization solvers (low memory usage, fast),  
+but try other algorithms and see if the solution generally remains the same
 
 ---
 
@@ -1746,6 +1811,11 @@ May be a substantial tradeoff between accuracy of your solution and speed
 --
 
 Common bad practice is to pick a larger tolerance (e.g. `1e-3`) so the problem "works" (e.g. so your big MLE converges)
+
+--
+
+Issue is that 1e-3 might be pretty big for your problem  
+if you haven't checked that your solution is not sensitive to the tolerance
 
 ---
 
