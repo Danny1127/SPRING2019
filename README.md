@@ -9,7 +9,7 @@ You can find the syllabus [here](https://raw.githack.com/AEM7130/SPRING2019/mast
 
 Problem set submissions: push your homeworks to your group's repo by the due date. Homeworks must be submitted as a well-commented and executed Jupyter notebook. See [JuliaPraxis](https://github.com/JuliaPraxis) for some best practices on commenting.
 
-[Problem Set 1](https://github.com/AEM7130/SPRING2019/blob/master/problem_sets/1_ps_intro_git.ipynb): Due February 13  
+[Problem Set 1](https://github.com/AEM7130/SPRING2019/blob/master/problem_sets/1_ps_intro_git.ipynb) // [Problem Set 1 Solutions](https://github.com/AEM7130/SPRING2019/blob/master/problem_sets/1_ps_intro_git_solutions.ipynb): Due February 13  
 [Problem Set 2](https://github.com/AEM7130/SPRING2019/blob/master/problem_sets/2_ps_optim.ipynb): Due February 27
 ## Final project proposal
 
