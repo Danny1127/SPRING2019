@@ -418,7 +418,7 @@ function_iteration(f, 2.)
 ## Intermediate guess of 0.9986471128909702.
 ## Intermediate guess of 1.0006771306930664.
 ## Intermediate guess of 0.9996616064962437.
-##   0.004019 seconds (861 allocations: 233.508 KiB)
+##   0.002029 seconds (861 allocations: 233.508 KiB)
 ## The fixed point of f(x) is at 1.0001692397053021.
 ```
 
@@ -690,7 +690,9 @@ for sufficiently large `\(k\)`
 
 --
 
-If `\(C &lt; 1\)` and `\(p = 1\)`, the rate of convergence is linear. If `\(1 &lt; p &lt; 2\)`, convergence is superlinear, and if `\(p = 2\)` convergence is quadratic. The higher order the convergence rate, the faster it converges
+If `\(C &lt; 1\)` and `\(p = 1\)`, the rate of convergence is linear
+
+If `\(1 &lt; p &lt; 2\)`, convergence is superlinear, and if `\(p = 2\)` convergence is quadratic. The higher order the convergence rate, the faster it converges
 
 --
 
@@ -742,7 +744,7 @@ Broyden's method can be faster than Newton's method if derivatives are costly to
 
 # Convergence speed
 
-Consider an example where `\(f(x) = x - sqrt(x) = 0\)`
+Consider an example where `\(f(x) = x - \sqrt(x) = 0\)`
 
 What does convergence look like across our main approaches in terms of the `\(L^1-\)`norm if all guesses start at `\(x^{(0)} = 0.5\)`?
 
@@ -753,7 +755,7 @@ What does convergence look like across our main approaches in terms of the `\(L^
 
 ---
 
-# Complementarity problems
+# Complementarity problems: rootfinding
 
 Let: 
 
@@ -794,7 +796,7 @@ The opposite is true if we are at the lower bound
 # Complementarity problems
 
 Economic problems are complementarity problems where we are  
-maximizing a function (e.g. profit) subject to some constraint (e.g. price floors)
+finding a root of a function (e.g. marginal profit) subject to some constraint (e.g. price floors)
 
 The Karush-Kuhn-Tucker theorem shows that `\(x\)` solves the constrained optimization problem  
 if and only if it solves the complementarity problem
@@ -1207,8 +1209,8 @@ to the relationship between the constrained problem and the dual Lagrange proble
 General idea:
 
 1. Start at some current iterate `\(x_k\)`
-2. Select a direction to move in `\(p_k\)` (somehow)
-3. Figure out how far along `\(p_k\)` to move (the key part)
+2. Select a direction to move in `\(p_k\)`
+3. Figure out how far along `\(p_k\)` to move
 
 --
 
