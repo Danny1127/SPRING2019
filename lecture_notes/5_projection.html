@@ -548,6 +548,23 @@ code up a function `project_monomial(f, n, lb, ub)` that takes in some function 
 degree of approximation `n`, lower bound `lb` and upper bound `ub`, 
 and constructs a monomial approximation on an evenly spaced grid via collocation
 
+--
+
+We will be plotting stuff, see `http://docs.juliaplots.org/latest/examples/gr/` for example code using the `GR` backend
+
+--
+
+Initialize with:
+
+```julia
+using Plots
+gr()
+```
+
+```
+## Plots.GRBackend()
+```
+
 ---
 
 # The monomial basis
@@ -557,17 +574,15 @@ Let's approximate `sin(x)`
 
 ```julia
 using Plots
-using Polynomials
-
-f(x) = sin.(x);
 gr();
-# Plot sin(x)
-Plots.plot(f, 0, 2pi, line = 4, grid = false, leg = false, size = (500, 250))
+f(x) = sin.(x);
+
+Plots.plot(f, 0, 2pi, line = 4, grid = false, legend = false, size = (500, 250))
 ```
 
 
 
-&lt;img src="5_projection_files/figure-html/unnamed-chunk-1-J1.png" width="667" /&gt;
+&lt;img src="5_projection_files/figure-html/unnamed-chunk-2-J1.png" width="667" /&gt;
 
 ---
 
@@ -671,17 +686,25 @@ f_values_10 = f_approx(coefficients_10, plot_points)
 # Plot
 
 
-```julia
-# Plot the actual function and overlay our approximation using a dashed line (in practice put all arguments on their own line)
-Plots.plot(f, 0, 2pi, line = 4, grid = false, label = "sin(x)", size = (500, 300));
-plot!(plot_points, f_values_5, color = :red, linewidth = 4.0, linestyle = :dash, 
-    xlabel = "x", ylabel = "sin(x)", label = "Approximation n = 5", tickfontsize = 14, guidefontsize = 14);
-plot!(plot_points, f_values_10, color = :purple, linewidth = 4.0, linestyle = :dot, label = "Approximation n = 10") 
+&lt;img src="5_projection_files/figure-html/unnamed-chunk-6-J1.png" width="800" /&gt;
+
+---
+
+# Plot
+
+
+```
+## Plot{Plots.GRBackend() n=2}
 ```
 
+---
+
+# Plot
 
 
-&lt;img src="5_projection_files/figure-html/unnamed-chunk-5-J1.png" width="667" /&gt;
+```
+## Plot{Plots.GRBackend() n=3}
+```
 
 ---
 
@@ -727,33 +750,35 @@ runge_values_10 = f_approx(coefficients_10, plot_points);
 # Runge's function
 
 
-```julia
-Plots.plot(runge, -1, 1, line = 4, grid = false, label = "1/(1 + 25x^2)", size = (500, 350), legendfont = font(5), legend = :topright);
-plot!(plot_points, runge_values_5, color = :red, linewidth = 4.0, linestyle = :dash, 
-    xlabel = "x", ylabel = "f(x) = 1/(1 + 25x^2)", label = "Approximation n = 5", tickfontsize = 14, guidefontsize = 14);
-plot!(plot_points, runge_values_10, color = :purple, linewidth = 4.0, linestyle = :dot, label = "Approximation n = 10") 
-```
+&lt;img src="5_projection_files/figure-html/unnamed-chunk-10-J1.png" width="800" /&gt;
+
+---
+
+# Runge's function
 
 
+&lt;img src="5_projection_files/figure-html/unnamed-chunk-11-J1.png" width="800" /&gt;
 
-&lt;img src="5_projection_files/figure-html/unnamed-chunk-7-J1.png" width="667" /&gt;
+---
+
+# Runge's function
+
+
+&lt;img src="5_projection_files/figure-html/unnamed-chunk-12-J1.png" width="800" /&gt;
 
 ---
 
 # Maybe we can just crank up n?
 
 
-```julia
-coefficients_20 = project_monomial(runge, 20, -1, 1);
-runge_values_20 = f_approx(coefficients_20, plot_points);
-Plots.plot(runge, -1, 1, line = 4, grid = false, label = "1/(1 + 25x^2)", size = (500, 325), legend = :top);
-plot!(plot_points, runge_values_20, color = :red, linewidth = 4.0, linestyle = :dash, 
-    xlabel = "x", ylabel = "f(x) = 1/(1 + 25x^2)", label = "Approximation n = 20", tickfontsize = 14, guidefontsize = 14)
-```
+&lt;img src="5_projection_files/figure-html/unnamed-chunk-13-J1.png" width="800" /&gt;
+
+---
+
+# Maybe we can just crank up n?
 
 
-
-&lt;img src="5_projection_files/figure-html/unnamed-chunk-8-J1.png" width="667" /&gt;
+&lt;img src="5_projection_files/figure-html/unnamed-chunk-14-J1.png" width="800" /&gt;
 
 ---
 
@@ -841,6 +866,10 @@ and returns the values of a the basis function of degree `n` at all points `x`
 
 Write a plotting function `plot_function(basis_function, x, n)` that takes an arbitrary basis function `basis_function` and plots all basis functions up to degree `n`
 
+--
+
+If you can't get the recurrence relation to work, you can use an alternative: `$$T_n(x) = cos(n \, arccos(x))$$`
+
 ---
 
 # The two basis functions
@@ -917,7 +946,7 @@ plot_function(monomials, x, n)
 
 
 
-&lt;img src="5_projection_files/figure-html/unnamed-chunk-11-J1.png" width="800" /&gt;
+&lt;img src="5_projection_files/figure-html/unnamed-chunk-17-J1.png" width="800" /&gt;
 
 ---
 
@@ -930,7 +959,7 @@ plot_function(cheb_polys, x, n)
 
 
 
-&lt;img src="5_projection_files/figure-html/unnamed-chunk-12-J1.png" width="800" /&gt;
+&lt;img src="5_projection_files/figure-html/unnamed-chunk-18-J1.png" width="800" /&gt;
 
 ---
 
@@ -1159,45 +1188,54 @@ end;
 # Chebyshev node locations
 
 
-```julia
-plot(cheb_nodes(3), zeros(3, 1), label = "3 Nodes", ylims = (-.01, .01),
-    seriestype = :scatter, xlabel = "Chebyshev Nodes", ylabel = "", size = (600, 350),
-    tickfontsize = 14, guidefontsize = 14, grid = false, markersize = 5)
-```
-
-
-
-&lt;img src="5_projection_files/figure-html/unnamed-chunk-14-J1.png" width="800" /&gt;
+&lt;img src="5_projection_files/figure-html/unnamed-chunk-20-J1.png" width="800" /&gt;
 
 ---
 
 # Chebyshev node locations
 
 
-```julia
-plot!(cheb_nodes(6), zeros(6, 1), label = "6 Nodes", ylims = (-.01, .01),
-    seriestype = :scatter, markershape = :diamond,
-    markersize = 5)
-```
-
-
-
-&lt;img src="5_projection_files/figure-html/unnamed-chunk-15-J1.png" width="800" /&gt;
+&lt;img src="5_projection_files/figure-html/unnamed-chunk-21-J1.png" width="800" /&gt;
 
 ---
 
 # Chebyshev node locations
 
 
-```julia
-plot!(cheb_nodes(11), zeros(11, 1), label = "11 Nodes", 
-    seriestype = :scatter, markershape = :xcross, 
-    markersize = 5)
-```
+&lt;img src="5_projection_files/figure-html/unnamed-chunk-22-J1.png" width="800" /&gt;
 
+---
 
+# Chebyshev node locations
 
-&lt;img src="5_projection_files/figure-html/unnamed-chunk-16-J1.png" width="800" /&gt;
+The nodes are heavily focused near the end points, why is that?
+
+--
+
+Imagine areas of our approximant near the center of our domain but not at a node
+
+--
+
+These areas benefit from having multiple nodes on both the left and right
+
+--
+
+This provides more information for these off-node areas and allows them to be better approximated  
+because we know whats happening nearby in several different directions
+
+--
+
+If we moved to an area closer to the edge of the domain, there may only one node  
+to the left or right of it providing information on what the value of our approximant should be
+
+--
+
+The approximation won't be as good, all else equal
+
+--
+
+Therefore, it's best to put more nodes in these areas to shore up this informational deficit  
+and get good approximation quality near the edges of our domain
     </textarea>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({

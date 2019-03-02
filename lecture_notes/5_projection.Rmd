@@ -538,6 +538,18 @@ code up a function `project_monomial(f, n, lb, ub)` that takes in some function 
 degree of approximation `n`, lower bound `lb` and upper bound `ub`, 
 and constructs a monomial approximation on an evenly spaced grid via collocation
 
+--
+
+We will be plotting stuff, see `http://docs.juliaplots.org/latest/examples/gr/` for example code using the `GR` backend
+
+--
+
+Initialize with:
+```{julia}
+using Plots
+gr()
+```
+
 ---
 
 # The monomial basis
@@ -546,19 +558,17 @@ Let's approximate `sin(x)`
 
 ```{julia}
 using Plots
-using Polynomials
-
-f(x) = sin.(x);
 gr();
-# Plot sin(x)
-Plots.plot(f, 0, 2pi, line = 4, grid = false, leg = false, size = (500, 250))
+f(x) = sin.(x);
+
+Plots.plot(f, 0, 2pi, line = 4, grid = false, legend = false, size = (500, 250))
 ```
 
 ---
 
 # Approximating sin(x)
 
-```{julia}
+```{julia, cache=TRUE}
 
 function project_monomial(f, n, lb, ub)
     # solves Ψc = y → c = Ψ\y
@@ -588,7 +598,7 @@ and a vector of new (more) points to use for plotting `plot_points`
 
 --
 
-```{julia}
+```{julia, tidy=TRUE}
 function f_approx(coefficients, points)
     n = length(coefficients) - 1
     basis_functions = [coefficients[degree + 1] * points.^degree for degree = 0:n] # evaluate basis functions
@@ -600,7 +610,7 @@ end;
 
 --
 
-```{julia}
+```{julia, cache=TRUE}
 plot_points = 0:.01:2pi;
 f_values_5 = f_approx(coefficients_5, plot_points);
 f_values_10 = f_approx(coefficients_10, plot_points)
@@ -611,11 +621,33 @@ f_values_10 = f_approx(coefficients_10, plot_points)
 
 # Plot
 
-```{julia}
-# Plot the actual function and overlay our approximation using a dashed line (in practice put all arguments on their own line)
-Plots.plot(f, 0, 2pi, line = 4, grid = false, label = "sin(x)", size = (500, 300));
-plot!(plot_points, f_values_5, color = :red, linewidth = 4.0, linestyle = :dash, 
-    xlabel = "x", ylabel = "sin(x)", label = "Approximation n = 5", tickfontsize = 14, guidefontsize = 14);
+```{julia, echo=FALSE}
+# Plot the actual function and overlay our approximation using a dashed line
+# (in practice you really should put all arguments on their own line, 
+# but vertical spacing is an issue on slides if we want to show the code...)
+Plots.plot(f, 0, 2pi, line = 4, grid = false, label = "sin(x)", size = (600, 400), 
+           xlabel = "x", ylabel = "sin(x)", tickfontsize = 14, guidefontsize = 14)
+```
+
+---
+
+# Plot
+
+```{julia, echo=FALSE}
+# Plot the actual function and overlay our approximation using a dashed line
+# (in practice you really should put all arguments on their own line, 
+# but vertical spacing is an issue on slides...) 
+plot!(plot_points, f_values_5, color = :red, linewidth = 4.0, linestyle = :dash, label = "Approximation n = 5")
+```
+
+---
+
+# Plot
+
+```{julia, echo=FALSE}
+# Plot the actual function and overlay our approximation using a dashed line
+# (in practice you really should put all arguments on their own line, 
+# but vertical spacing is an issue on slides...)
 plot!(plot_points, f_values_10, color = :purple, linewidth = 4.0, linestyle = :dot, label = "Approximation n = 10") 
 ```
 
@@ -661,10 +693,27 @@ runge_values_10 = f_approx(coefficients_10, plot_points);
 
 # Runge's function
 
-```{julia}
-Plots.plot(runge, -1, 1, line = 4, grid = false, label = "1/(1 + 25x^2)", size = (500, 350), legendfont = font(5), legend = :topright);
+```{julia, echo=FALSE}
+Plots.plot(runge, -1, 1, line = 4, grid = false, 
+           label = "1/(1 + 25x^2)", size = (600, 400), 
+           legendfont = font(7), legend = :topright, ylims = (-.5, 1), 
+           xlabel = "x", ylabel = "f(x) = 1/(1 + 25x^2)", tickfontsize = 14, guidefontsize = 14)
+```
+
+---
+
+# Runge's function
+
+```{julia, echo=FALSE}
 plot!(plot_points, runge_values_5, color = :red, linewidth = 4.0, linestyle = :dash, 
-    xlabel = "x", ylabel = "f(x) = 1/(1 + 25x^2)", label = "Approximation n = 5", tickfontsize = 14, guidefontsize = 14);
+    label = "Approximation n = 5") 
+```
+
+---
+
+# Runge's function
+
+```{julia, echo=FALSE}
 plot!(plot_points, runge_values_10, color = :purple, linewidth = 4.0, linestyle = :dot, label = "Approximation n = 10") 
 ```
 
@@ -672,12 +721,21 @@ plot!(plot_points, runge_values_10, color = :purple, linewidth = 4.0, linestyle 
 
 # Maybe we can just crank up n?
 
-```{julia}
+```{julia, echo=FALSE}
 coefficients_20 = project_monomial(runge, 20, -1, 1);
 runge_values_20 = f_approx(coefficients_20, plot_points);
-Plots.plot(runge, -1, 1, line = 4, grid = false, label = "1/(1 + 25x^2)", size = (500, 325), legend = :top);
+Plots.plot(runge, -1, 1, line = 4, grid = false, 
+           label = "1/(1 + 25x^2)", size = (600, 400), legend = :top, ylims = (-2, 10),
+           ylabel = "f(x) = 1/(1 + 25x^2)", xlabel = "x", tickfontsize = 14, guidefontsize = 14)
+```
+
+---
+
+# Maybe we can just crank up n?
+
+```{julia, echo=FALSE}
 plot!(plot_points, runge_values_20, color = :red, linewidth = 4.0, linestyle = :dash, 
-    xlabel = "x", ylabel = "f(x) = 1/(1 + 25x^2)", label = "Approximation n = 20", tickfontsize = 14, guidefontsize = 14)
+    label = "Approximation n = 20")
 ```
 
 ---
@@ -765,6 +823,10 @@ and returns the values of a the basis function of degree `n` at all points `x`
 --
 
 Write a plotting function `plot_function(basis_function, x, n)` that takes an arbitrary basis function `basis_function` and plots all basis functions up to degree `n`
+
+--
+
+If you can't get the recurrence relation to work, you can use an alternative: $$T_n(x) = cos(n \, arccos(x))$$
 
 ---
 
@@ -1052,9 +1114,9 @@ end;
 
 # Chebyshev node locations
 
-```{julia}
+```{julia, echo=FALSE}
 plot(cheb_nodes(3), zeros(3, 1), label = "3 Nodes", ylims = (-.01, .01),
-    seriestype = :scatter, xlabel = "Chebyshev Nodes", ylabel = "", size = (600, 350),
+    seriestype = :scatter, xlabel = "Chebyshev Nodes", ylabel = "", size = (600, 400),
     tickfontsize = 14, guidefontsize = 14, grid = false, markersize = 5)
 ```
 
@@ -1062,7 +1124,7 @@ plot(cheb_nodes(3), zeros(3, 1), label = "3 Nodes", ylims = (-.01, .01),
 
 # Chebyshev node locations
 
-```{julia}
+```{julia, echo=FALSE}
 plot!(cheb_nodes(6), zeros(6, 1), label = "6 Nodes", ylims = (-.01, .01),
     seriestype = :scatter, markershape = :diamond,
     markersize = 5)
@@ -1072,8 +1134,41 @@ plot!(cheb_nodes(6), zeros(6, 1), label = "6 Nodes", ylims = (-.01, .01),
 
 # Chebyshev node locations
 
-```{julia}
+```{julia, echo=FALSE}
 plot!(cheb_nodes(11), zeros(11, 1), label = "11 Nodes", 
     seriestype = :scatter, markershape = :xcross, 
     markersize = 5)
 ```
+
+---
+
+# Chebyshev node locations
+
+The nodes are heavily focused near the end points, why is that?
+
+--
+
+Imagine areas of our approximant near the center of our domain but not at a node
+
+--
+
+These areas benefit from having multiple nodes on both the left and right
+
+--
+
+This provides more information for these off-node areas and allows them to be better approximated  
+because we know whats happening nearby in several different directions
+
+--
+
+If we moved to an area closer to the edge of the domain, there may only one node  
+to the left or right of it providing information on what the value of our approximant should be
+
+--
+
+The approximation won't be as good, all else equal
+
+--
+
+Therefore, it's best to put more nodes in these areas to shore up this informational deficit  
+and get good approximation quality near the edges of our domain
