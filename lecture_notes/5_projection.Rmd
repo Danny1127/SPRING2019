@@ -535,7 +535,7 @@ It is simple, and SW tells us that we can uniformly approximate any continuous f
 ## Practice
 
 code up a function `project_monomial(f, n, lb, ub)` that takes in some function `f`,  
-degree of approximation `n`, lower bound `lb` and upper bound `ub`, 
+degree of approximation `n`, lower bound `lb` and upper bound `ub`,  
 and constructs a monomial approximation on an evenly spaced grid via collocation
 
 --
@@ -568,7 +568,7 @@ Plots.plot(f, 0, 2pi, line = 4, grid = false, legend = false, size = (500, 250))
 
 # Approximating sin(x)
 
-```{julia, cache=TRUE}
+```{julia}
 
 function project_monomial(f, n, lb, ub)
     # solves Ψc = y → c = Ψ\y
@@ -610,7 +610,7 @@ end;
 
 --
 
-```{julia, cache=TRUE}
+```{julia}
 plot_points = 0:.01:2pi;
 f_values_5 = f_approx(coefficients_5, plot_points);
 f_values_10 = f_approx(coefficients_10, plot_points)
@@ -634,9 +634,6 @@ Plots.plot(f, 0, 2pi, line = 4, grid = false, label = "sin(x)", size = (600, 400
 # Plot
 
 ```{julia, echo=FALSE}
-# Plot the actual function and overlay our approximation using a dashed line
-# (in practice you really should put all arguments on their own line, 
-# but vertical spacing is an issue on slides...) 
 plot!(plot_points, f_values_5, color = :red, linewidth = 4.0, linestyle = :dash, label = "Approximation n = 5")
 ```
 
@@ -645,10 +642,7 @@ plot!(plot_points, f_values_5, color = :red, linewidth = 4.0, linestyle = :dash,
 # Plot
 
 ```{julia, echo=FALSE}
-# Plot the actual function and overlay our approximation using a dashed line
-# (in practice you really should put all arguments on their own line, 
-# but vertical spacing is an issue on slides...)
-plot!(plot_points, f_values_10, color = :purple, linewidth = 4.0, linestyle = :dot, label = "Approximation n = 10") 
+plot!(plot_points, f_values_10, color = :purple, linewidth = 4.0, linestyle = :dot, label = "Approximation n = 10")
 ```
 
 ---
@@ -832,7 +826,7 @@ If you can't get the recurrence relation to work, you can use an alternative: $$
 
 # The two basis functions
 
-```{julia}
+```{julia, tidy=TRUE}
 # Chebyshev polynomial function
 function cheb_polys(x, n)
     if n == 0
@@ -854,23 +848,44 @@ monomials(x, n) = x.^n;
 
 # The plotting function
 
-```{julia}
+```{julia, tidy=TRUE}
 function plot_function(basis_function, x, n)
 
     for i = 1:n-1
+
         f_data = basis_function(x, i)
+        
         if i == 1
-            plot(x, f_data, linewidth = 4.0, xlabel = "x", ylabel = "Basis functions", label = "", tickfontsize = 14, guidefontsize = 14);
+            plot(x, f_data, linewidth = 4.0, xlabel = "x", ylabel = "Basis functions", label = "", 
+                 tickfontsize = 14, guidefontsize = 14, grid = false);
         else
             plot!(x, f_data, linewidth = 4.0, label = "");
         end
             
     end
+    
     f_data = basis_function(x, n)
     plot!(x, f_data, linewidth = 4.0, label = "")
-end
-n = 10
-x = -1:.01:1
+    
+end;
+
+x = -1:.01:1;
+```
+
+---
+
+# Monomials up to degree 5
+
+```{julia}
+plot_function(monomials, x, 5)
+```
+
+---
+
+# Chebyshev polynomials up to degree 5
+
+```{julia}
+plot_function(cheb_polys, x, 5)
 ```
 
 ---
@@ -878,7 +893,7 @@ x = -1:.01:1
 # Monomials up to degree 10
 
 ```{julia}
-plot_function(monomials, x, n)
+plot_function(monomials, x, 10)
 ```
 
 ---
@@ -886,7 +901,7 @@ plot_function(monomials, x, n)
 # Chebyshev polynomials up to degree 10
 
 ```{julia}
-plot_function(cheb_polys, x, n)
+plot_function(cheb_polys, x, 10)
 ```
 
 ---
@@ -1010,37 +1025,6 @@ John Boyd summarizes decades of experience with function approximation with his 
 - When in doubt, use Chebyshev polynomials unless the solution is spatially periodic, in which case an ordinary fourier series is better
 - Unless you are sure another set of basis functions is better, use Chebyshev polynomials
 - Unless you are really, really sure another set of basis functions is better use Chebyshev polynomials
-
----
-
-# Multi-dimensional approximation
-
-Thus far we have displayed the Chebyshev basis in only one dimension
-
---
-
-We approximate functions of some arbitrary dimension $N$ by taking the  
-tensor product of vectors of the one-dimensional Chebyshev polynomials
-
---
-
-Ex: if we wanted to approximate a two dimensional function with a degree 3 polynomial, implying 3 grid points for each dimension,  
-we could do the following:
-
-- Construct a vector of polynomials $[\phi_{1,1}, \, \phi_{1,2}, \, \phi_{1,3}]$ for dimensions 1
-
---
-
-- Construct a vector of polynomials $[\phi_{2,1}, \, \phi_{2,2}, \, \phi_{2,3}]$ for dimension 2
-
---
-
-- The tensor product is just the product of every possibly polynomial pair which results in:  
-$[\phi_{1,1}\phi_{2,1} ,\, \phi_{1,1}\phi_{2,2}, \, \phi_{1,1}\phi_{2,3}, \, \phi_{1,2}\phi_{2,1}, \, \phi_{1,2}\phi_{2,2}, \, \phi_{1,2}\phi_{2,3}, \, \phi_{1,3}\phi_{2,1}, \, \phi_{1,3}\phi_{2,2}, \, \phi_{1,3}\phi_{2,3}]$
-
---
-
-- We can then solve for the 9 coefficients on these two dimensional polynomials 
 
 ---
 
@@ -1172,3 +1156,276 @@ The approximation won't be as good, all else equal
 
 Therefore, it's best to put more nodes in these areas to shore up this informational deficit  
 and get good approximation quality near the edges of our domain
+
+---
+
+# Discrete states
+
+How do we handle a discrete state $S_d$ when trying to approximate $V$?
+
+--
+
+Just like you might expect, we effectively have a different value function approximant over the continuous states for each value of $S_d$
+
+---
+
+# Multi-dimensional approximation
+
+Thus far we have displayed the Chebyshev basis in only one dimension
+
+--
+
+We approximate functions of some arbitrary dimension $N$ by taking the  
+tensor product of vectors of the one-dimensional Chebyshev polynomials
+
+--
+
+Ex: if we wanted to approximate a two dimensional function with a degree 3 polynomial, implying 3 grid points for each dimension,  
+we could do the following:
+
+- Construct a vector of polynomials $[\phi_{1,1}, \, \phi_{1,2}, \, \phi_{1,3}]$ for dimensions 1
+
+--
+
+- Construct a vector of polynomials $[\phi_{2,1}, \, \phi_{2,2}, \, \phi_{2,3}]$ for dimension 2
+
+--
+
+- The tensor product is just the product of every possibly polynomial pair which results in:  
+$[\phi_{1,1}\phi_{2,1} ,\, \phi_{1,1}\phi_{2,2}, \, \phi_{1,1}\phi_{2,3}, \, \phi_{1,2}\phi_{2,1}, \, \phi_{1,2}\phi_{2,2}, \, \phi_{1,2}\phi_{2,3}, \, \phi_{1,3}\phi_{2,1}, \, \phi_{1,3}\phi_{2,2}, \, \phi_{1,3}\phi_{2,3}]$
+
+--
+
+- We can then solve for the 9 coefficients on these two dimensional polynomials 
+
+--
+
+The computational complexity here grows exponentially: $\text{total # point} = (\text{points per  state})^{\text{# states}}$
+
+--
+
+Exponential complexity is costly, often called the **Curse of dimensionality**
+
+--
+
+We will cover smart ways to deal with this later
+
+---
+
+# Finite element methods
+
+An alternative to pseudo-spectral methods is the class of **finite element methods**
+
+--
+
+Finite element methods use basis functions that are non-zero over *subintervals* of the domain of our grid
+
+--
+
+For example, we can use *splines* (piecewise polynomials) over segments of our domains  
+where they are spliced together at prespecified breakpoints, which are called knots
+
+--
+
+The higher the order the polynomial we use, the higher the order of derivatives that we can preserve continuity at the knots
+
+--
+
+For example, a linear spline yields an approximant that is continuous,  
+but its first derivatives are discontinuous step functions unless the underlying value function happened to be precisely linear
+
+--
+
+If we have a quadratic spline, we can also preserve the first derivative's continuity at the knots,  
+but the second derivative will be a discontinuous step function
+
+--
+
+As we increase the order of the spline polynomial, we have increasing numbers of coefficients we need to determine
+
+--
+
+To determine these additional coefficients using the same number of points,  
+we require additional conditions that must be satisfied
+
+--
+
+These are what ensure continuity of higher order derivatives at the knots as the degree of the spline grows
+
+---
+
+# Finite element methods
+
+
+With linear splines, each segment of our value function approximant is defined by a linear function
+
+--
+
+For each of these linear components, we need to solve for 1 coefficient and 1 intercept term
+
+--
+
+Each end of a linear segment must equal the function value at the knots
+
+--
+
+We have two conditions and two unknowns for each segment: this is a simple set of linear equations that we can solve
+
+--
+
+In numerical models we typically don't use linear splines because we often care about the quality  
+of approximation of higher order derivatives, cubic splines are more common
+
+---
+
+# Cubic splines
+
+Suppose we wish to approximate using a cubic spline on $N+1$ knots
+
+--
+
+We need $N$ cubic polynomials when entails $4N$ coefficients to determine
+
+--
+
+We can obtain $3(N-1)$ equations by ensuring that the approximant is continuous at all interior knots,  
+and its first and second derivatives are continuous at all interior knots $[3\times(N+1-1-1)]$
+
+--
+
+This means that the value of the left cubic polynomial equals the value of the right cubic polynomial at each interior knot
+
+Ensuring the the approximant equals the function's value at all of the nodes adds another $N+1$ equations
+
+--
+
+We therefore have a total of $4N-2$ equations for $4N$ coefficients
+
+--
+
+We need two more conditions to solve the problem
+
+--
+
+What is often used is that the approximant's first or second derivative matches that of the function at the end points
+
+---
+
+# Splines can potentially handle lots of curvature 
+
+If the derivative is of interest for optimization, or to recover some variable of economic meaning,  
+then we may need to have these derivatives preserved well at the knots
+
+--
+
+One large benefit of splines is that they can handle kinks or areas of high curvature
+
+--
+
+**How?**
+
+--
+
+By having the modeler place many knots in a concentrated region
+
+--
+
+If the knots are stacked on top of one another, this actually allows for a *kink* to be explicitly represented in the value function approximant, but the economist must know precisely where the kink is
+
+--
+
+Useful spline packages out there: `Dierckx`, `Interpolations`, `QuantEcon`
+
+---
+
+# Code it up!
+
+Let's code up our own linear spline approximation function `linear_spline_approx(f, knots)`,  
+where `f` is the function we are approximating and `knots` are the knots
+
+Have it return a function a function `spline_eval` that takes in `evaluation_points` as an argument  
+where `evaluation_points` are the points we want to evaluate the spline approximant at
+
+**Hint:** Linear splines are pretty easy, given two points $(x_{i+1}, y_{i+1})$ and $(x_i, y_i)$,  
+the spline in between these points is given by
+$$y(x) = y_i + \frac{y_{i+1} - y_i}{x_{i+1} - x_{i}}(x - x_i)$$
+
+---
+# Spline approximator
+```{julia}
+function linear_spline_approx(f, knots)
+    function spline_eval(evaluation_points) 
+        prev_knot = knots[1] # initialize previous knot
+        if !(typeof(evaluation_points) <: Number) # if using multiple points  
+            y_eval = similar(evaluation_points)
+            y_index = 1
+            for knot in knots[2:end]
+                current_points = evaluation_points[prev_knot .<= evaluation_points .< knot]
+                y_eval[y_index:y_index + length(current_points) - 1] =
+                    f(prev_knot) .+ (f(knot) - f(prev_knot))/(knot - prev_knot)*(current_points .- prev_knot)
+                prev_knot = knot
+                y_index += length(current_points)
+            end
+        else # if using just a single point
+            for knot in knots[2:end]
+                if prev_knot .<= evaluation_points .< knot
+                    y_eval = f(prev_knot) + (f(knot) - f(prev_knot))/(knot - prev_knot)*(evaluation_point - prev_knot)
+                end
+                prev_knot = knot
+            end
+        end
+        return y_eval
+    end
+    return spline_eval
+end
+```
+
+---
+
+# Plot
+
+```{julia}
+f(x) = sin(x)
+knots_coarse = 0:pi/2:2pi;
+spline_func_coarse = linear_spline_approx(f, knots_coarse);
+knots_fine = 0:pi/4:2pi;
+spline_func_fine = linear_spline_approx(f, knots_fine);
+knots_superfine = 0:pi/12:2pi;
+spline_func_superfine = linear_spline_approx(f, knots_superfine);
+x_vals =0:.05:2pi;
+y_vals_coarse = spline_func_coarse(x_vals);
+y_vals_fine = spline_func_fine(x_vals);
+y_vals_superfine = spline_func_superfine(x_vals);
+```
+
+---
+
+# Plot
+```{julia, echo=FALSE}
+# Plot the actual function and overlay our approximation using a dashed line
+# (in practice you really should put all arguments on their own line, 
+# but vertical spacing is an issue on slides if we want to show the code...)
+Plots.plot(f, 0, 2pi, line = 4, grid = false, label = "sin(x)", size = (600, 400), 
+           xlabel = "x", ylabel = "sin(x)", tickfontsize = 14, guidefontsize = 14)
+```
+
+---
+
+# Plot
+```{julia, echo=FALSE}
+plot!(x_vals, y_vals_coarse, color = :red, linewidth = 4.0, linestyle = :dash, label = "4 knot spline grid")
+```
+
+---
+
+# Plot
+```{julia, echo=FALSE}
+plot!(x_vals, y_vals_fine, color = :purple, linewidth = 4.0, linestyle = :dot, label = "8 knot spline grid")
+```
+
+---
+
+# Plot
+```{julia, echo=FALSE}
+plot!(x_vals, y_vals_superfine, color = :orange, linewidth = 4.0, linestyle = :dashdot, label = "24 knot spline grid")
+```

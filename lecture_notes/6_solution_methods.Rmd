@@ -1,0 +1,55 @@
+---
+title: "Solution methods for dynamic economic models"
+subtitle: "<html><div style='float:left'></div><hr color='#459DE0' size=5px width=1100px></html>"
+author: Ivan Rudik
+date: AEM 7130
+output:
+  xaringan::moon_reader:
+    css: [default, metropolis, metropolis-fonts] 
+    lib_dir: libs
+    nature:
+      highlightStyle: bash
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: '16:9'
+
+---
+
+# Roadmap
+
+1. How do we think about solving dynamic economic models
+2. Value function iteration
+3. Time iteration
+4. Policy iteration
+
+---
+
+# Solutions to economic models
+
+How do we solve economic models?
+
+--
+
+First, what do we want?
+
+--
+
+We want to be able to compute things like optimal policy trajectories, welfare, etc
+
+--
+
+There are generally two objects that can deliver what we want:
+
+1. Value functions
+2. Policy functions
+
+--
+
+The idea behind the different solution concepts is to recover one of these two functions
+
+--
+
+We recover these functions by exploiting two things:
+
+1. Dynamic equilibrium conditions incorporating these functions (e.g. Bellman equations, Euler equations)
+2. Fixed points
