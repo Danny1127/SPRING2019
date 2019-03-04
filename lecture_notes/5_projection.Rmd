@@ -76,7 +76,7 @@ How do we do this?
 
 --
 
-We solve this by specifying some linear combination of basis functions $\Psi_i(\mathbf{S})$
+We solve this by specifying some linear combination of **basis functions** $\Psi_i(\mathbf{S})$
 $$V^j(\mathbf{S}|\theta) = \sum_{i=0}^j \theta_i \Psi_i(\mathbf{S})$$
 with coefficients $\theta_0,...,\theta_j$
 
@@ -167,7 +167,7 @@ The residual based on the coefficient vector $\theta_1$ is large for small value
 
 --
 
-The residual based on $\theta_2$ has medium values just above everywhere
+The residual based on $\theta_2$ has medium values just about everywhere
 
 --
 
@@ -249,17 +249,17 @@ The partial derivative weight function yields a metric function that solves the 
 
 # Collocation
 
-The most commonly used weight function gives us a methodology called *collocation*
+The most commonly used weight function gives us a methodology called **collocation**
 
 --
 
 Here our weight function is
 $$\phi_i(\mathbf{S}) = \delta(\mathbf{S}-\mathbf{S}_i)$$
-Where $\delta$ is the Dirac delta function and $\mathbf{S}_i$ are the j+1 *collocation points* or *collocation nodes* selected by the researcher
+Where $\delta$ is the *Dirac delta function* and $\mathbf{S}_i$ are the j+1 *collocation points* or *collocation nodes* selected by the researcher
 
 --
 
-The Dirac weight function is zero at all $\mathbf{S}$ except at $\mathbf{S} = \mathbf{S}_i$
+The Dirac delta function is zero at all $\mathbf{S}$ except at $\mathbf{S} = \mathbf{S}_i$
 
 --
 
@@ -283,7 +283,7 @@ $$R(\mathbf{S}_i|\theta) = 0, i=1,...,j+1$$
 # Rough idea of how we proceed
 
 Collocation methods aim to approximate the value function $V(S_t)$ with  
-some linear combination of known, and usually orthogonal ($\int f(x) g(x) w(x) = 0$), basis functions
+some linear combination of known, and usually orthogonal ($\intf(x)g(x)w(x)=0$), basis functions
 
 --
 
@@ -398,12 +398,12 @@ and use them to construct a *collocation grid* that spans the domain of our prob
 --
 
 Using our knowledge of how the value function behaves at the limited set of points on our grid,  
-we can interpolate our value function approximate at all points off the grid points,  
+we can interpolate our value function approximant at all points off the grid points,  
 but *within* the domain of our grid
 
 --
 
-**Key:** The value function approximant is not very good outside the grid's domain since that would mean  
+**Note:** The value function approximant is not very good outside the grid's domain since that would mean  
 extrapolating beyond whatever information we have gained from analyzing our value function on the grid
 
 ---
@@ -546,7 +546,7 @@ We will be plotting stuff, see `http://docs.juliaplots.org/latest/examples/gr/` 
 
 Initialize with:
 ```{julia}
-using Plots
+using Plots, LinearAlgebra
 gr()
 ```
 
@@ -649,8 +649,13 @@ plot!(plot_points, f_values_10, color = :purple, linewidth = 4.0, linestyle = :d
 
 # Cool!
 
-We just wrote some code that exploits Stone-Weierstrauss and allows us to approximate  
+We just wrote some code that exploits Stone-Weierstrauss and allows us to (potentially) approximate  
 any continuous function arbitrarily well as `n` goes to infinity
+
+--
+
+To approximate any function we'd need to feed in some polynomial function `g(x, n)`  
+as opposed to hard-coding it like I did in the previous slides
 
 --
 
@@ -749,6 +754,18 @@ The first 6 monomials can induce a condition number of $10^{10}$, a substantial 
 --
 
 Second, they can vary dramatically in size, which leads to scaling/truncation errors
+
+--
+
+```{julia}
+runge(x) = 1 ./ (1 .+ 25x.^2);
+coefficients_10 = project_monomial(runge, 10, -1, 1);
+points = rand(10);
+n = length(coefficients_10) - 1;
+basis_functions = [coefficients_10[degree + 1] * points.^degree for degree = 0:n];
+basis_matrix = hcat(basis_functions...);
+println("Condition number: $(cond(basis_matrix))")
+```
 
 --
 
@@ -941,11 +958,11 @@ which tend to cluster quadratically towards the edges of the domain
 
 --
 
-You can think about this as projecting sequentially finer uniform grids onto a hemicircle
+You can think about this as projecting sequentially finer uniform grids from a hemicircle onto the x-axis
 
 --
 
-An alternative representation of Chebyshev polynomials is
+An alternative representation of Chebyshev polynomials that is more compact for coding is
 $$T_n(x) = cos(n \, arccos(x))$$
 
 --
@@ -1030,11 +1047,7 @@ John Boyd summarizes decades of experience with function approximation with his 
 
 # Grid point selection
 
-We construct the basis function approximant by evaluating the function on a predefined grid
-
---
-
-These are specific values in the domain of $V$
+We construct the basis function approximant by evaluating the function on a predefined grid in the domain of $V$
 
 --
 
@@ -1176,7 +1189,7 @@ Thus far we have displayed the Chebyshev basis in only one dimension
 --
 
 We approximate functions of some arbitrary dimension $N$ by taking the  
-tensor product of vectors of the one-dimensional Chebyshev polynomials
+tensor of vectors of the one-dimensional Chebyshev polynomials
 
 --
 
@@ -1191,7 +1204,7 @@ we could do the following:
 
 --
 
-- The tensor product is just the product of every possibly polynomial pair which results in:  
+- The tensor is just the product of every possibly polynomial pair which results in:  
 $[\phi_{1,1}\phi_{2,1} ,\, \phi_{1,1}\phi_{2,2}, \, \phi_{1,1}\phi_{2,3}, \, \phi_{1,2}\phi_{2,1}, \, \phi_{1,2}\phi_{2,2}, \, \phi_{1,2}\phi_{2,3}, \, \phi_{1,3}\phi_{2,1}, \, \phi_{1,3}\phi_{2,2}, \, \phi_{1,3}\phi_{2,3}]$
 
 --
