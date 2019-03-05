@@ -11,9 +11,14 @@ Problem set submissions: push your homeworks to your group's repo by the due dat
 
 [Problem Set 1](https://github.com/AEM7130/SPRING2019/blob/master/problem_sets/1_ps_intro_git.ipynb) // [Problem Set 1 Solutions](https://github.com/AEM7130/SPRING2019/blob/master/problem_sets/1_ps_intro_git_solutions.ipynb): Due February 13  
 [Problem Set 2](https://github.com/AEM7130/SPRING2019/blob/master/problem_sets/2_ps_optim.ipynb): Due February 27
+
 ## Final project proposal
 
 [Final project proposal guidelines](https://rawcdn.githack.com/AEM7130/SPRING2019/cba512ce09ddb548999a6417bafe95e7ba7e2c44/final_project/project_proposal.html)
+
+## Computational paper presentation
+
+[Computational paper presentation guidelines](https://raw.githack.com/AEM7130/SPRING2019/master/paper_presentation/paper_presentation.html)
 
 ## Lectures
 
