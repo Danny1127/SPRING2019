@@ -41,7 +41,11 @@ One way to do this is via **projection**
 
 --
 
-Or perturbation, or discretization, or some analytic approaches for specific models.
+Or perturbation, or discretization, or some analytic approaches for specific models
+
+--
+
+We'll focus on value functions here, but we can solve dynamic models by approximating policy functions as well
 
 ---
 
@@ -88,7 +92,7 @@ and select the coefficient values to minimize the residual, given some measure o
 
 --
 
-This step of selecting the coefficients is called *projecting* $H$ against our basis
+This step of selecting the coefficients is called **projecting** $H$ against our basis
 
 --
 
@@ -136,7 +140,7 @@ So OLS is within the class of projection methods
 
 --
 
-In OLS we use observed data, but in theory we use the operator $H(V)$ imposed by theory
+In OLS we use observed data, but in theory we use the operator $H(V)$
 
 ---
 
@@ -283,7 +287,7 @@ $$R(\mathbf{S}_i|\theta) = 0, i=1,...,j+1$$
 # Rough idea of how we proceed
 
 Collocation methods aim to approximate the value function $V(S_t)$ with  
-some linear combination of known, and usually orthogonal ($\intf(x)g(x)w(x)=0$), basis functions
+some linear combination of known, and usually orthogonal ($\int f(x)g(x)w(x)=0$), basis functions
 
 --
 
@@ -383,7 +387,7 @@ given many different sets of initial conditions or realizations of random variab
 
 # Interpolation
 
-How many points in our state space do we select to be collocation points?
+What points in our state space do we select to be collocation points?
 
 --
 
@@ -594,7 +598,7 @@ coefficients_10 = project_monomial(f, 10, 0, 2pi)
 # Approximating sin(x)
 
 Now we need to construct a function `f_approx(coefficients, plot_points)` that takes in the `coefficients` vector,  
-and a vector of new (more) points to use for plotting `plot_points`
+and an arbitrary vector of points to evaluate the approximant at (for plotting)
 
 --
 
@@ -654,7 +658,7 @@ any continuous function arbitrarily well as `n` goes to infinity
 
 --
 
-To approximate any function we'd need to feed in some polynomial function `g(x, n)`  
+To approximate any function we'd need to feed in some basis function `g(x, n)`  
 as opposed to hard-coding it like I did in the previous slides
 
 --
@@ -960,15 +964,6 @@ which tend to cluster quadratically towards the edges of the domain
 
 You can think about this as projecting sequentially finer uniform grids from a hemicircle onto the x-axis
 
---
-
-An alternative representation of Chebyshev polynomials that is more compact for coding is
-$$T_n(x) = cos(n \, arccos(x))$$
-
---
-
-They are trigonometric functions disguised as polynomials
-
 ---
 
 # Two important theorems
@@ -978,7 +973,7 @@ There are two important theorems to know about Chebyshev polynomials
 --
 
 **Chebyshev interpolation theorem:** *If $f(x) \in \mathbb{C}[a,b]$, if $\{\psi_i(x), i=0,...\}$ is a system of polynomials (where $\psi_i(x)$ is of exact degree i) orthogonal with respect to $\phi(x)$ on $[a,b]$ and if $p_j = \sum_{i=0}^j \theta_i \psi_i(x)$ interpolates $f(x)$ in the zeros of $\psi_{n+1}(x)$, then:
-$$\lim_{j\rightarrow\infty} \left(|| f-p_j||_2 \right)^2 = \lim_{n\rightarrow\infty}\int_a^b \phi(x) \left(f(x) - p_j \right)^2 dx = 0$$*
+$$\lim_{j\rightarrow\infty} \left(|| f-p_j||_2 \right)^2 = \lim_{j\rightarrow\infty}\int_a^b \phi(x) \left(f(x) - p_j \right)^2 dx = 0$$*
 
 --
 
@@ -1018,7 +1013,7 @@ So the error in the approximation is as well!
 --
 
 We often also have that Chebyshev approximations geometrically converge which give us the following convenient property:
-$$|f(x) - f^j(x|theta)| \sim O(\theta_j)$$
+$$|f(x) - f^j(x|\theta)| \sim O(\theta_j)$$
 The truncation error by stopping at polynomial $j$ is of the same order as the magnitude of the coefficient $\theta_j$ on the last polynomial
 
 --
@@ -1048,10 +1043,6 @@ John Boyd summarizes decades of experience with function approximation with his 
 # Grid point selection
 
 We construct the basis function approximant by evaluating the function on a predefined grid in the domain of $V$
-
---
-
-If we want an $n$ degree interpolation to match the value of the function, we need at least $n$ points
 
 --
 
@@ -1213,7 +1204,7 @@ $[\phi_{1,1}\phi_{2,1} ,\, \phi_{1,1}\phi_{2,2}, \, \phi_{1,1}\phi_{2,3}, \, \ph
 
 --
 
-The computational complexity here grows exponentially: $\text{total # point} = (\text{points per  state})^{\text{# states}}$
+The computational complexity here grows exponentially: $\text{total # points} = (\text{points per  state})^{\text{# states}}$
 
 --
 
@@ -1235,7 +1226,7 @@ Finite element methods use basis functions that are non-zero over *subintervals*
 
 --
 
-For example, we can use *splines* (piecewise polynomials) over segments of our domains  
+For example, we can use **splines** (piecewise polynomials) over segments of our domains  
 where they are spliced together at prespecified breakpoints, which are called knots
 
 --

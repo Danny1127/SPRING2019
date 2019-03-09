@@ -19,8 +19,8 @@ output:
 
 1. How do we think about solving dynamic economic models
 2. Value function iteration
-3. Time iteration
-4. Policy iteration
+3. Fixed point iteration
+4. Time iteration
 
 ---
 
@@ -45,7 +45,8 @@ There are generally two objects that can deliver what we want:
 
 --
 
-The idea behind the different solution concepts is to recover one of these two functions
+The idea behind the most commonly used solution concepts is  
+to recover good approximations to one of these two functions
 
 --
 
@@ -53,3 +54,451 @@ We recover these functions by exploiting two things:
 
 1. Dynamic equilibrium conditions incorporating these functions (e.g. Bellman equations, Euler equations)
 2. Fixed points
+
+--
+
+First lets look at recovering the value function
+
+---
+
+# Our general example
+
+Consider the following problem we will be using for all of these solution methods:
+\begin{gather}
+	\max_{\left\{c_t \right\}_{t=0}^\infty} \sum_{t=1}^\infty \beta^t u(c_t) \notag \\
+	 \text{subject to:} \,\,\,\,\, k_{t+1} = f(k_t) - c_t \notag 
+\end{gather}
+where both consumption and time $t+1$ capital are positive, $k(0) = k_0$, $\alpha > 0$, and $\beta \in (0,1)$
+
+--
+
+Represent the growth model as a Bellman equation
+\begin{gather}
+	V(k) = \max_{c}  u(c) + \beta V(k') \notag \\
+	 \text{subject to:} \,\,\,\,\, k' = f(k) - c \notag 
+\end{gather}
+
+--
+
+we can reduce this to
+$$V(k) = \max_{c}  u(c) + \beta V(f(k) - c)$$
+
+---
+
+# Method 1: Value function iteration
+
+In VFI we approximate the *value function* with some flexible functional form $\Gamma(k_t;b)$ where $b$ is a vector of coefficients
+
+--
+
+The algorithm:
+
+1. Select the number of collocation points in each dimension and the domain of the approximation space
+2. Select an initial vector of coefficients $b_0$ with the same number of elements as the collocation grid,  
+and initial guesses for consumption for the solver
+3. Select a rule for convergence
+4. Construct the grid and basis matrix
+5. While convergence criterion $>$ tolerance
+  + Start iteration $p$
+  + Solve the right hand side of the Bellman equation using the  
+  value function approximant $\Gamma(k_{t+1};b^{(p)})$ in place of $V(k_{t+1})$
+  + Recover the maximized values, conditional on the approximant
+  + Fit the polynomial to the values and recover a new vector of coefficients $\hat{b}^{(p+1)}$.
+  + Compute the vector of coefficients $b^{(p+1)}$ for iteration $p+1$ by  
+  $b^{(p+1)} = (1-\gamma) b^{(p)} + \gamma \hat{b}^{(p+1)}$ where $\gamma \in (0,1).$
+  + Use the optimal controls for this iteration as our initial guess for next iteration
+6. Error check your approximation
+
+---
+
+# Step 1: Select the number of points and collocation domain
+- $u(c_t) = c_t^{1-\eta}/(1-\eta)$
+- $f(k_t) = k_t^\alpha$
+- $\alpha = 0.75$
+- $\beta = 0.95$
+- $\eta = 2$
+- $k_0 = (\alpha \beta)^{1/(1-\alpha)}/2$
+
+--
+
+Put everything in a **named tuple** to make passing things easier
+
+```{julia}
+using LinearAlgebra, Optim, Plots 
+params = (alpha = 0.75, beta = 0.95, eta = 2,
+                steady_state = (0.75*0.95)^(1/(1 - 0.75)), k_0 = (0.75*0.95)^(1/(1 - 0.75))*.75,
+                capital_upper = (0.75*0.95)^(1/(1 - 0.75))*1.5, capital_lower = (0.75*0.95)^(1/(1 - 0.75))/2,
+                num_points = 7, tolerance = 0.0001)
+```
+
+---
+
+# Step 2: Select an initial vector of coefficients $b_0$
+
+```{julia}
+coefficients = .1*ones(params.num_points)
+```
+
+---
+
+# Step 3: Select a convergence rule
+
+Rule: maximum change in value on the grid < 0.001%
+
+---
+
+# Step 4: Construct the grid and matrix of basis functions
+
+```{julia}
+function cheb_nodes(n)
+    nodes = [cos.(pi * (2k - 1)/(2n)) for k = 1:n]
+end;
+grid = cheb_nodes(params.num_points) # [-1, 1] grid
+capital_grid = (1 .+ grid)*(params.capital_upper - params.capital_lower)/2 .+ params.capital_lower # actual capital grid
+```
+
+---
+
+# Step 4: Construct the grid and basis matrix
+
+```{julia}
+```{julia, tidy=TRUE}
+# Chebyshev polynomial function
+function cheb_polys(x, n)
+    if n == 0
+        return 1                    # T_0(x) = 1
+    elseif n == 1
+        return x                    # T_1(x) = x
+    else
+        cheb_recursion(x, n) =
+            2x.*cheb_polys.(x, n - 1) .- cheb_polys.(x, n - 2)
+        return cheb_recursion(x, n) # T_n(x) = 2xT_{n-1}(x) - T_{n-2}(x)
+    end
+end;
+```
+
+---
+
+# Step 4a: Pre-invert your basis matrix
+
+Hot tip: you will be using the exact same basis matrix in each loop iteration: just pre-invert it to save time
+
+```{julia}
+basis_matrix = [cheb_polys.(grid, n) for n = 0:params.num_points - 1];
+basis_matrix = hcat(basis_matrix...)
+basis_inverse = basis_matrix\I
+```
+
+---
+
+# Step 5: Loop
+
+Construct a function that loops over the grid points and solves the Bellman given $\Gamma(x;b^{(p)})$
+
+```{julia}
+
+function loop_grid(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+
+    max_value = -.0*ones(params.num_points);
+    scale_capital(capital) = 2*(capital - params.capital_lower)/(params.capital_upper - params.capital_lower) - 1
+
+    # Compute next period's consumption from the Euler equation
+    for (iteration, capital) in enumerate(capital_grid)
+
+        function bellman(consumption)
+            capital_next = capital^params.alpha - consumption
+            capital_next_scaled = scale_capital(capital_next)
+            cont_value = coefficients' * [cheb_polys.(capital_next_scaled, n) for n = 0:params.num_points - 1]
+            value_out = (consumption)^(1-params.eta)/(1-params.eta) + params.beta*cont_value
+            return -value_out
+        end;
+
+
+        results = optimize(bellman, 0.00*capital^params.alpha, 0.99*capital^params.alpha)
+
+        # Compute new value
+        max_value[iteration] = -Optim.minimum(results)
+    end
+
+    return max_value
+end
+```
+
+---
+
+# Step 5: Loop
+
+```{julia}
+function solve_vfi(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+
+    max_value = -.0*ones(params.num_points);
+    error = 1e10;
+    value_prev = .1*ones(params.num_points);
+
+    iteration = 1
+
+    coefficients_store = Vector{Vector}(undef, 1)
+    coefficients_store[1] = coefficients
+    
+    while error > params.tolerance
+
+        max_value = loop_grid(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+
+        # New coefficients
+        coefficients = basis_inverse*max_value
+
+        # Maximum relative value change
+        error = maximum(abs.((max_value - value_prev)./(value_prev)))
+
+        value_prev = deepcopy(max_value)
+
+        if mod(iteration, 5) == 0
+            println("Maximum Error of $(error) on iteration $(iteration).")
+            append!(coefficients_store, [coefficients])
+        end
+
+        iteration += 1
+
+    end
+
+    return coefficients, max_value, coefficients_store
+end
+```
+
+---
+
+# Step 5: Loop
+
+```{julia}
+solution_coeffs, max_value, intermediate_coefficients = 
+    solve_vfi(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+```
+
+---
+
+# Now lets plot our solutions
+
+```{julia}
+scale_capital(capital) = 2*(capital - params.capital_lower)/(params.capital_upper - params.capital_lower) - 1
+capital_levels = range(params.capital_lower, params.capital_upper, length = 100);
+eval_points = scale_capital.(capital_levels);
+
+solution = similar(intermediate_coefficients);
+
+# Compute optimal consumption at all capital grid points
+for (iteration, coeffs) in enumerate(intermediate_coefficients)
+    solution[iteration] = [coeffs' * [cheb_polys.(capital, n) for n = 0:params.num_points - 1] for capital in eval_points];
+end
+``` 
+
+---
+
+# Plot the value function iterations
+
+```{julia, echo = FALSE}
+using Plots
+gr();
+plot(capital_levels, solution[2], 
+     grid = false, 
+     legend = false, 
+     size = (600, 400), 
+     xlabel = "Capital", 
+     ylabel = "Value", 
+     tickfontsize = 14, 
+     guidefontsize = 14,
+     ylims = (minimum(hcat(solution[2:end]...)) , maximum(hcat(solution[2:end]...))),
+     linewidth = 4)
+```
+
+---
+
+# Plot the value function iterations
+
+```{julia, echo = FALSE}
+plot!(capital_levels, solution[3],
+     linewidth = 4)
+```
+
+---
+
+# Plot the value function iterations
+
+```{julia, echo = FALSE}
+using Plots
+gr();
+plot!(capital_levels, solution[5],
+     linewidth = 4)
+```
+
+---
+
+# Plot the value function iterations
+
+```{julia, echo = FALSE}
+using Plots
+gr();
+plot!(capital_levels, solution[7],
+     linewidth = 4)
+```
+
+---
+
+# Plot the value function iterations
+
+```{julia, echo = FALSE}
+plot!(capital_levels, solution[9],
+     linewidth = 4)
+```
+
+---
+
+# Plot the value function iterations
+
+```{julia, echo = FALSE}
+plot!(capital_levels, solution[11],
+     linewidth = 4)
+```
+
+---
+
+# Plot the value function iterations
+
+```{julia, echo = FALSE}
+plot!(capital_levels, solution[13],
+     linewidth = 4)
+```
+
+---
+
+# Plot the value function iterations
+
+```{julia, echo = FALSE}
+plot!(capital_levels, solution[14],
+     linewidth = 4)
+```
+
+---
+
+# Plot the value function iterations
+
+```{julia, echo = FALSE}
+plot!(capital_levels, solution[end],
+     linewidth = 4)
+```
+
+---
+
+# Plot the final value function
+
+```{julia, echo = FALSE}
+using Plots
+gr();
+plot(capital_levels, solution[end], 
+     grid = false, 
+     legend = false, 
+     size = (600, 400), 
+     xlabel = "Capital", 
+     ylabel = "Value", 
+     tickfontsize = 14, 
+     guidefontsize = 14,
+     linewidth = 4)
+```
+
+---
+
+# Now lets try simulating
+
+```{julia}
+
+function simulate_model(params, solution_coeffs, time_horizon = 100)
+    capital_store = zeros(time_horizon + 1)
+    consumption_store = zeros(time_horizon)
+    capital_store[1] = params.k_0
+    
+    for t = 1:time_horizon
+        capital = capital_store[t]
+        function bellman(consumption)
+            capital_next = capital^params.alpha - consumption
+            capital_next_scaled = scale_capital(capital_next)
+            cont_value = solution_coeffs' * [cheb_polys.(capital_next_scaled, n) for n = 0:params.num_points - 1]
+            value_out = (consumption)^(1-params.eta)/(1-params.eta) + params.beta*cont_value
+            return -value_out
+        end;
+
+        results = optimize(bellman, 0.0, capital^params.alpha)
+
+        # Compute new value
+        consumption_store[t] = Optim.minimizer(results)
+        capital_store[t+1] = capital^params.alpha - consumption_store[t]
+    end
+
+    return consumption_store, capital_store
+end;
+```
+
+---
+
+# Now lets try simulating: not perfect!
+
+```{julia}
+time_horizon = 200;
+consumption, capital = simulate_model(params, solution_coeffs, time_horizon);
+plot(1:time_horizon, consumption, color = :red, linewidth = 4.0, label = "Consumption", legend = :right, size = (500, 300));
+plot!(1:time_horizon, capital[1:end-1], color = :blue, linewidth = 4.0, linestyle = :dash, label = "Capital");
+plot!(1:time_horizon, params.steady_state*ones(time_horizon), color = :purple, linewidth = 2.0, linestyle = :dot, label = "Analytic Steady State")
+```
+
+---
+
+# The consumption policy function
+
+```{julia}
+capital_levels = range(params.capital_lower, params.capital_upper, length = 100);
+consumption = similar(capital_levels);
+
+# Compute optimal consumption at all capital grid points
+for (iteration, capital) in enumerate(capital_levels)
+
+    function bellman(consumption)
+        capital_next = capital^params.alpha - consumption
+        capital_next_scaled = scale_capital(capital_next)
+        cont_value = solution_coeffs' * [cheb_polys.(capital_next_scaled, n) for n = 0:params.num_points - 1]
+        value_out = (consumption)^(1-params.eta)/(1-params.eta) + params.beta*cont_value
+        return -value_out
+    end
+
+    results = optimize(bellman, 0., capital^params.alpha)
+
+    consumption[iteration] = Optim.minimizer(results)
+end;
+```
+
+---
+
+# The consumption policy function
+
+```{julia, echo = FALSE}
+plot(capital_levels, consumption, 
+     grid = false, 
+     legend = false, 
+     size = (600, 400), 
+     xlabel = "Capital", 
+     ylabel = "Consumption", 
+     tickfontsize = 14, 
+     guidefontsize = 14,
+     linewidth = 4)
+```
+
+---
+
+# Method 2: Fixed point iteration
+
+In FPI we generally approximate a *policy function* with some flexible functional form $\Gamma(k_t;b)$ where $b$ is a vector of coefficients
+
+--
+
+We use some equilibrium condition, typically an Euler equation, and put it into a fixed point form
+
+-- 
+
+We then iteration on this fixed point similar to function iteration like we learned before

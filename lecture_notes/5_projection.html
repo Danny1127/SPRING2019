@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
   <head>
     <title>Projection methods</title>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <meta name="author" content="Ivan Rudik" />
     <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
     <link href="libs/remark-css-0.0.1/metropolis.css" rel="stylesheet" />
@@ -51,7 +51,11 @@ One way to do this is via **projection**
 
 --
 
-Or perturbation, or discretization, or some analytic approaches for specific models.
+Or perturbation, or discretization, or some analytic approaches for specific models
+
+--
+
+We'll focus on value functions here, but we can solve dynamic models by approximating policy functions as well
 
 ---
 
@@ -98,7 +102,7 @@ and select the coefficient values to minimize the residual, given some measure o
 
 --
 
-This step of selecting the coefficients is called *projecting* `\(H\)` against our basis
+This step of selecting the coefficients is called **projecting** `\(H\)` against our basis
 
 --
 
@@ -146,7 +150,7 @@ So OLS is within the class of projection methods
 
 --
 
-In OLS we use observed data, but in theory we use the operator `\(H(V)\)` imposed by theory
+In OLS we use observed data, but in theory we use the operator `\(H(V)\)`
 
 ---
 
@@ -293,7 +297,7 @@ Since we have a finite set of points we do not need to solve difficult integrals
 # Rough idea of how we proceed
 
 Collocation methods aim to approximate the value function `\(V(S_t)\)` with  
-some linear combination of known, and usually orthogonal ($\intf(x)g(x)w(x)=0$), basis functions
+some linear combination of known, and usually orthogonal ($\int f(x)g(x)w(x)=0$), basis functions
 
 --
 
@@ -393,7 +397,7 @@ given many different sets of initial conditions or realizations of random variab
 
 # Interpolation
 
-How many points in our state space do we select to be collocation points?
+What points in our state space do we select to be collocation points?
 
 --
 
@@ -580,8 +584,6 @@ f(x) = sin.(x);
 Plots.plot(f, 0, 2pi, line = 4, grid = false, legend = false, size = (500, 250))
 ```
 
-
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-2-J1.png" width="667" /&gt;
 
 ---
@@ -629,7 +631,7 @@ coefficients_10 = project_monomial(f, 10, 0, 2pi)
 # Approximating sin(x)
 
 Now we need to construct a function `f_approx(coefficients, plot_points)` that takes in the `coefficients` vector,  
-and a vector of new (more) points to use for plotting `plot_points`
+and an arbitrary vector of points to evaluate the approximant at (for plotting)
 
 --
 
@@ -677,14 +679,9 @@ f_values_10 = f_approx(coefficients_10, plot_points)
 ##  -0.0031823881890886696
 ```
 
-```julia
-
-```
-
 ---
 
 # Plot
-
 
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-6-J1.png" width="800" /&gt;
 
@@ -692,13 +689,11 @@ f_values_10 = f_approx(coefficients_10, plot_points)
 
 # Plot
 
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-7-J1.png" width="800" /&gt;
 
 ---
 
 # Plot
-
 
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-8-J1.png" width="800" /&gt;
 
@@ -711,7 +706,7 @@ any continuous function arbitrarily well as `n` goes to infinity
 
 --
 
-To approximate any function we'd need to feed in some polynomial function `g(x, n)`  
+To approximate any function we'd need to feed in some basis function `g(x, n)`  
 as opposed to hard-coding it like I did in the previous slides
 
 --
@@ -750,13 +745,11 @@ runge_values_10 = f_approx(coefficients_10, plot_points);
 
 # Runge's function
 
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-10-J1.png" width="800" /&gt;
 
 ---
 
 # Runge's function
-
 
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-11-J1.png" width="800" /&gt;
 
@@ -764,20 +757,17 @@ runge_values_10 = f_approx(coefficients_10, plot_points);
 
 # Runge's function
 
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-12-J1.png" width="800" /&gt;
 
 ---
 
 # Maybe we can just crank up n?
 
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-13-J1.png" width="800" /&gt;
 
 ---
 
 # Maybe we can just crank up n?
-
 
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-14-J1.png" width="800" /&gt;
 
@@ -813,7 +803,7 @@ println("Condition number: $(cond(basis_matrix))")
 ```
 
 ```
-## Condition number: 2.2496086165157528e20
+## Condition number: 3.4848659868942844e19
 ```
 
 --
@@ -949,8 +939,6 @@ x = -1:.01:1;
 plot_function(monomials, x, 5)
 ```
 
-
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-18-J1.png" width="800" /&gt;
 
 ---
@@ -961,8 +949,6 @@ plot_function(monomials, x, 5)
 ```julia
 plot_function(cheb_polys, x, 5)
 ```
-
-
 
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-19-J1.png" width="800" /&gt;
 
@@ -975,8 +961,6 @@ plot_function(cheb_polys, x, 5)
 plot_function(monomials, x, 10)
 ```
 
-
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-20-J1.png" width="800" /&gt;
 
 ---
@@ -987,8 +971,6 @@ plot_function(monomials, x, 10)
 ```julia
 plot_function(cheb_polys, x, 10)
 ```
-
-
 
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-21-J1.png" width="800" /&gt;
 
@@ -1031,15 +1013,6 @@ which tend to cluster quadratically towards the edges of the domain
 
 You can think about this as projecting sequentially finer uniform grids from a hemicircle onto the x-axis
 
---
-
-An alternative representation of Chebyshev polynomials that is more compact for coding is
-`$$T_n(x) = cos(n \, arccos(x))$$`
-
---
-
-They are trigonometric functions disguised as polynomials
-
 ---
 
 # Two important theorems
@@ -1049,7 +1022,7 @@ There are two important theorems to know about Chebyshev polynomials
 --
 
 **Chebyshev interpolation theorem:** *If `\(f(x) \in \mathbb{C}[a,b]\)`, if `\(\{\psi_i(x), i=0,...\}\)` is a system of polynomials (where `\(\psi_i(x)\)` is of exact degree i) orthogonal with respect to `\(\phi(x)\)` on `\([a,b]\)` and if `\(p_j = \sum_{i=0}^j \theta_i \psi_i(x)\)` interpolates `\(f(x)\)` in the zeros of `\(\psi_{n+1}(x)\)`, then:
-`$$\lim_{j\rightarrow\infty} \left(|| f-p_j||_2 \right)^2 = \lim_{n\rightarrow\infty}\int_a^b \phi(x) \left(f(x) - p_j \right)^2 dx = 0$$`*
+`$$\lim_{j\rightarrow\infty} \left(|| f-p_j||_2 \right)^2 = \lim_{j\rightarrow\infty}\int_a^b \phi(x) \left(f(x) - p_j \right)^2 dx = 0$$`*
 
 --
 
@@ -1089,7 +1062,7 @@ So the error in the approximation is as well!
 --
 
 We often also have that Chebyshev approximations geometrically converge which give us the following convenient property:
-`$$|f(x) - f^j(x|theta)| \sim O(\theta_j)$$`
+`$$|f(x) - f^j(x|\theta)| \sim O(\theta_j)$$`
 The truncation error by stopping at polynomial `\(j\)` is of the same order as the magnitude of the coefficient `\(\theta_j\)` on the last polynomial
 
 --
@@ -1119,10 +1092,6 @@ John Boyd summarizes decades of experience with function approximation with his 
 # Grid point selection
 
 We construct the basis function approximant by evaluating the function on a predefined grid in the domain of `\(V\)`
-
---
-
-If we want an `\(n\)` degree interpolation to match the value of the function, we need at least `\(n\)` points
 
 --
 
@@ -1183,20 +1152,17 @@ end;
 
 # Chebyshev node locations
 
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-23-J1.png" width="800" /&gt;
 
 ---
 
 # Chebyshev node locations
 
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-24-J1.png" width="800" /&gt;
 
 ---
 
 # Chebyshev node locations
-
 
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-25-J1.png" width="800" /&gt;
 
@@ -1276,7 +1242,7 @@ we could do the following:
 
 --
 
-The computational complexity here grows exponentially: `\(\text{total # point} = (\text{points per  state})^{\text{# states}}\)`
+The computational complexity here grows exponentially: `\(\text{total # points} = (\text{points per  state})^{\text{# states}}\)`
 
 --
 
@@ -1298,7 +1264,7 @@ Finite element methods use basis functions that are non-zero over *subintervals*
 
 --
 
-For example, we can use *splines* (piecewise polynomials) over segments of our domains  
+For example, we can use **splines** (piecewise polynomials) over segments of our domains  
 where they are spliced together at prespecified breakpoints, which are called knots
 
 --
@@ -1490,27 +1456,24 @@ y_vals_superfine = spline_func_superfine(x_vals);
 ---
 
 # Plot
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-28-J1.png" width="800" /&gt;
 
 ---
 
 # Plot
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-29-J1.png" width="800" /&gt;
 
 ---
 
 # Plot
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-30-J1.png" width="800" /&gt;
 
 ---
 
 # Plot
-
 &lt;img src="5_projection_files/figure-html/unnamed-chunk-31-J1.png" width="800" /&gt;
     </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({
 "highlightStyle": "bash",
@@ -1521,11 +1484,41 @@ y_vals_superfine = spline_func_superfine(x_vals);
 if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
   window.dispatchEvent(new Event('resize'));
 });
-(function() {
-  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
   if (!r) return;
   s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
   d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
 })();</script>
 
 <script>
@@ -1540,8 +1533,8 @@ if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
 </script>
 
 <script>
-(function() {
-  var i, text, code, codes = document.getElementsByTagName('code');
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
   for (i = 0; i < codes.length;) {
     code = codes[i];
     if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
@@ -1555,7 +1548,8 @@ if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
     }
     i++;
   }
-})();
+};
+slideshow._releaseMath(document);
 </script>
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>
