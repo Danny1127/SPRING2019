@@ -115,7 +115,7 @@ and initial guesses for consumption for the solver
   + Recover the maximized values, conditional on the approximant
   + Fit the polynomial to the values and recover a new vector of coefficients `\(\hat{b}^{(p+1)}\)`.
   + Compute the vector of coefficients `\(b^{(p+1)}\)` for iteration `\(p+1\)` by  
-  `\(b^{(p+1)} = (1-\gamma) b^{(p)} + \gamma \hat{b}^{(p+1)}\)` where `\(\gamma \in (0,1).\)`
+  `\(b^{(p+1)} = (1-\gamma) b^{(p)} + \gamma \hat{b}^{(p+1)}\)` where `\(\gamma \in (0,1).\)` (damping)
   + Use the optimal controls for this iteration as our initial guess for next iteration
 6. Error check your approximation
 
@@ -215,7 +215,6 @@ capital_grid = (1 .+ grid)*(params.capital_upper - params.capital_lower)/2 .+ pa
 # Step 4: Construct the grid and basis matrix
 
 
-
 ```julia
 # Chebyshev polynomial function
 function cheb_polys(x, n)
@@ -277,7 +276,6 @@ Construct a function that loops over the grid points and solves the Bellman give
 
 
 ```julia
-
 function loop_grid(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
 
     max_value = -.0*ones(params.num_points);
@@ -426,6 +424,12 @@ end
 
 # Plot the value function iterations
 
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-10-J1.png" width="800" /&gt;
+
+---
+
+# Plot the value function iterations
+
 &lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-11-J1.png" width="800" /&gt;
 
 ---
@@ -472,15 +476,9 @@ end
 
 ---
 
-# Plot the value function iterations
-
-&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-19-J1.png" width="800" /&gt;
-
----
-
 # Plot the final value function
 
-&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-20-J1.png" width="800" /&gt;
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-19-J1.png" width="800" /&gt;
 
 ---
 
@@ -488,7 +486,6 @@ end
 
 
 ```julia
-
 function simulate_model(params, solution_coeffs, time_horizon = 100)
     capital_store = zeros(time_horizon + 1)
     consumption_store = zeros(time_horizon)
@@ -517,18 +514,18 @@ end;
 
 ---
 
-# Now lets try simulating: not perfect!
+# Now lets try simulating
 
 
 ```julia
-time_horizon = 200;
+time_horizon = 100;
 consumption, capital = simulate_model(params, solution_coeffs, time_horizon);
 plot(1:time_horizon, consumption, color = :red, linewidth = 4.0, label = "Consumption", legend = :right, size = (500, 300));
 plot!(1:time_horizon, capital[1:end-1], color = :blue, linewidth = 4.0, linestyle = :dash, label = "Capital");
 plot!(1:time_horizon, params.steady_state*ones(time_horizon), color = :purple, linewidth = 2.0, linestyle = :dot, label = "Analytic Steady State")
 ```
 
-&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-22-J1.png" width="667" /&gt;
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-21-J1.png" width="667" /&gt;
 
 ---
 
@@ -560,7 +557,527 @@ end;
 
 # The consumption policy function
 
-&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-24-J1.png" width="800" /&gt;
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-23-J1.png" width="800" /&gt;
+
+---
+
+# Method 2: Fixed point iteration
+
+In FPI we generally approximate a *policy function* with some flexible functional form `\(\Gamma(k_t;b)\)` where `\(b\)` is a vector of coefficients
+
+--
+
+FPI re-casts equilibrium conditions of the model as a fixed point
+
+--
+
+We then perform multi-dimensional function iteration to solve for the fixed point
+
+--
+
+This ends up being very simple and it works on any dimension function
+
+--
+
+It is also does not bear a terrible computational cost and is derivative-free
+
+--
+
+The drawback is that it will not always converge and is generally unstable
+
+--
+
+This can be solved by **damping**
+
+
+---
+
+# Eq condition: Euler equation
+
+Often we will iterate on the Euler equation which for our problem is
+`$$u'(c_t) = \beta u'(c_{t+1}) f'(k_{t+1})$$`
+
+--
+
+We need to put this in a fixed point form in order to iterate on it
+`$$c_t = u'^{(-1)}\left(\beta u'(c_{t+1}) f'(k_{t+1})\right)$$`
+
+--
+
+How do we solve this?
+
+--
+
+We approximate the consumption policy function `\(c_{t} = C(k_t)\)` with some flexible functional form `\(\Psi(k_t; b)\)`
+
+--
+
+We have defined `\(c_{t}\)` in two ways, once as an outcome of the policy function, and once as an equilibrium condition
+
+--
+
+Now we can form our consumption policy function as a fixed point by substituting `\(C(k_t)\)` into the the Euler fixed point as follows
+`$$C(k_t) = u'^{(-1)}\left(\beta u'(C(k_{t+1})) f'(k_{t+1}(C(k_t),k_t))\right)$$`
+
+---
+
+# Method 2: Fixed point iteration
+
+The algorithm:
+
+1. Select the number of collocation points in each dimension and the domain of the approximation space
+2. Select an initial vector of coefficients `\(b_0\)` with the same number of elements as the collocation grid,  
+and initial guesses for consumption for the solver
+3. Select a rule for convergence
+4. Construct the grid and basis matrix
+5. While convergence criterion `\(&gt;\)` tolerance
+  + Start iteration `\(p\)`
+  + Substitute `\(C(k_{t+1};b^{(p)})\)` into the right hand side of the Euler fixed point
+  + Recover the LHS values of consumption at each grid point, conditional on `\(C(k_{t+1};b^{(p)})\)`
+  + Fit the polynomial to the values and recover a new vector of coefficients `\(\hat{b}^{(p+1)}\)`.
+  + Compute the vector of coefficients `\(b^{(p+1)}\)` for iteration `\(p+1\)` by  
+  `\(b^{(p+1)} = (1-\gamma) b^{(p)} + \gamma \hat{b}^{(p+1)}\)` where `\(\gamma \in (0,1).\)` (damping)
+6. Error check your approximation
+
+--
+
+Notice: we did not have to perform a maximization step **anywhere**, this leads to big speed gains
+
+---
+
+# Step 1: Select the number of points and collocation domain
+
+Put everything in a **named tuple** to make passing things easier
+
+
+```julia
+using LinearAlgebra, Optim, Plots
+params_fpi = (alpha = 0.75, beta = 0.95, eta = 2, damp = 0.5,
+                steady_state = (0.75*0.95)^(1/(1-0.75)), k_0 = (0.75*0.95)^(1/(1-0.75))*0.5,
+                capital_upper = (0.75*0.95)^(1/(1-0.75))*1.5, capital_lower = (0.75*0.95)^(1/(1-0.75))*0.5,
+                num_points = 5, tolerance = 0.00001)
+```
+
+```
+## (alpha = 0.75, beta = 0.95, eta = 2, damp = 0.5, steady_state = 0.25771486816406236, k_0 = 0.12885743408203118, capital_upper = 0.3865723022460935, capital_lower = 0.12885743408203118, num_points = 5, tolerance = 1.0e-5)
+```
+
+```julia
+scale_capital(capital) = 2*(capital - params_fpi.capital_lower)/(params_fpi.capital_upper - params_fpi.capital_lower) - 1
+```
+
+```
+## scale_capital (generic function with 1 method)
+```
+
+---
+
+# Step 2: Select an initial vector of coefficients `\(b_0\)`
+
+
+```julia
+coefficients = zeros(params_fpi.num_points)
+```
+
+```
+## 5-element Array{Float64,1}:
+##  0.0
+##  0.0
+##  0.0
+##  0.0
+##  0.0
+```
+
+---
+
+# Step 3: Select a convergence rule
+
+Rule: maximum change in value on the grid &lt; 0.001%
+
+---
+
+# Step 4: Construct the grid and matrix of basis functions
+
+
+```julia
+function cheb_nodes(n)
+    nodes = [cos.(pi * (2k - 1)/(2n)) for k = 1:n]
+end;
+grid = cheb_nodes(params_fpi.num_points);
+capital_grid = (1 .+ grid)*(params_fpi.capital_upper - params_fpi.capital_lower)/2 .+ params_fpi.capital_lower # actual capital grid
+```
+
+```
+## 5-element Array{Float64,1}:
+##  0.3802655705208513 
+##  0.33345536756572974
+##  0.2577148681640623 
+##  0.18197436876239492
+##  0.1351641658072734
+```
+
+---
+
+# Step 4: Construct the grid and basis matrix
+
+
+```julia
+# Chebyshev polynomial function
+function cheb_polys(x, n)
+    if n == 0
+        return 1                    # T_0(x) = 1
+    elseif n == 1
+        return x                    # T_1(x) = x
+    else
+        cheb_recursion(x, n) =
+            2x.*cheb_polys.(x, n - 1) .- cheb_polys.(x, n - 2)
+        return cheb_recursion(x, n) # T_n(x) = 2xT_{n-1}(x) - T_{n-2}(x)
+    end
+end;
+```
+
+---
+
+# Step 4a: Pre-invert your basis matrix
+
+Hot tip: you will be using the exact same basis matrix in each loop iteration: just pre-invert it to save time
+
+
+```julia
+basis_matrix = [cheb_polys.(grid, n) for n = 0:params_fpi.num_points - 1];
+basis_matrix = hcat(basis_matrix...);
+basis_inverse = basis_matrix\I
+```
+
+```
+## 5×5 Array{Float64,2}:
+##  0.2        0.2        0.2           0.2        0.2     
+##  0.380423   0.235114   5.55112e-17  -0.235114  -0.380423
+##  0.323607  -0.123607  -0.4          -0.123607   0.323607
+##  0.235114  -0.380423  -8.32667e-17   0.380423  -0.235114
+##  0.123607  -0.323607   0.4          -0.323607   0.123607
+```
+
+---
+
+# Step 5: Loop
+
+Construct the Euler fixed point function
+
+```julia
+function consumption_euler(params, capital, coefficients)
+
+    # RHS: Current consumption given current capital
+    consumption = coefficients' * [cheb_polys.(scale_capital(capital), n) for n = 0:params.num_points - 1]
+
+    # RHS: Next period's capital given current capital and consumption
+    capital_next = capital^params.alpha - consumption
+
+    # RHS: Next period's consumption given current capital and consumption
+    consumption_next = coefficients' * [cheb_polys.(scale_capital(capital_next), n) for n = 0:params.num_points - 1]
+    consumption_next = max(1e-10, consumption_next)
+
+    # LHS: Next period's consumption from Euler equation
+    consumption_lhs = (
+        params.beta *
+        consumption_next^(-params.eta) *
+        params.alpha*(capital_next).^(params.alpha-1)
+        ).^(-1/params.eta)
+    return consumption_lhs
+end
+```
+
+```
+## consumption_euler (generic function with 1 method)
+```
+
+---
+
+# Step 5: Loop
+
+Construct a function that loops over the grid points and solves the Euler given `\(\Psi(x;b^{(p)})\)`
+
+
+```julia
+function loop_grid_fpi(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+
+    consumption = similar(coefficients)
+
+    # Compute next period's consumption from the Euler equation
+    for (iteration, capital) in enumerate(capital_grid)
+        consumption[iteration] = consumption_euler(params, capital, coefficients)
+    end
+    return consumption
+end
+```
+
+```
+## loop_grid_fpi (generic function with 1 method)
+```
+
+---
+
+# Step 5: Loop
+
+
+```julia
+function solve_fpi(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+    error = 1e10
+    iteration = 1
+    consumption = similar(coefficients)
+    consumption_prev = similar(coefficients)
+    coefficients_prev = similar(coefficients)
+    coefficients_store = Vector{Vector}(undef, 1)
+    coefficients_store[1] = coefficients
+    while error &gt; params.tolerance
+        consumption = loop_grid_fpi(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+        if iteration &gt; 1
+            coefficients = params.damp*(basis_inverse*consumption) + (1 - params.damp)*coefficients_prev
+        else
+            coefficients = basis_inverse*consumption
+        end
+        error = maximum(abs.((consumption - consumption_prev)./(consumption_prev)))
+        coefficients_prev = deepcopy(coefficients)
+        consumption_prev = deepcopy(consumption)
+        if mod(iteration, 5) == 0
+            println("Maximum Error of $(error) on iteration $(iteration).")
+            append!(coefficients_store, [coefficients])
+        end
+        iteration += 1
+    end
+    return coefficients, consumption, coefficients_store
+end
+```
+
+```
+## solve_fpi (generic function with 1 method)
+```
+
+---
+
+# Step 5: Loop
+
+
+```julia
+solution_coeffs, consumption, intermediate_coefficients =
+    solve_fpi(params_fpi, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+```
+
+```
+## Maximum Error of 0.04848154313777527 on iteration 5.
+## Maximum Error of 0.9180423909010798 on iteration 10.
+## Maximum Error of 0.6785900670471697 on iteration 15.
+## Maximum Error of 0.3515179307657073 on iteration 20.
+## Maximum Error of 0.21082481614861703 on iteration 25.
+## Maximum Error of 0.13722914501426453 on iteration 30.
+## Maximum Error of 0.8151356271104383 on iteration 35.
+## Maximum Error of 1.9746925798283417 on iteration 40.
+## Maximum Error of 0.6076716985274082 on iteration 45.
+## Maximum Error of 0.2879644038542271 on iteration 50.
+## Maximum Error of 0.1892911080507604 on iteration 55.
+## Maximum Error of 0.1093381298578999 on iteration 60.
+## Maximum Error of 179325.2294038149 on iteration 65.
+## Maximum Error of 1.1586750214903812 on iteration 70.
+## Maximum Error of 0.4294716419658693 on iteration 75.
+## Maximum Error of 0.22191043193181803 on iteration 80.
+## Maximum Error of 0.1432901345644567 on iteration 85.
+## Maximum Error of 0.07585569547990628 on iteration 90.
+## Maximum Error of 2.5258644210144177e8 on iteration 95.
+## Maximum Error of 0.4181764419583226 on iteration 100.
+## Maximum Error of 0.04990349910093245 on iteration 105.
+## Maximum Error of 0.017029092693825177 on iteration 110.
+## Maximum Error of 0.006832144928472335 on iteration 115.
+## Maximum Error of 0.0033509265924215018 on iteration 120.
+## Maximum Error of 0.0016872853330860838 on iteration 125.
+## Maximum Error of 0.0008241527550163533 on iteration 130.
+## Maximum Error of 0.00039531946155805007 on iteration 135.
+## Maximum Error of 0.00018765907251506992 on iteration 140.
+## Maximum Error of 8.85615214960375e-5 on iteration 145.
+## Maximum Error of 4.1657730962667196e-5 on iteration 150.
+## Maximum Error of 1.9559109901747855e-5 on iteration 155.
+## Maximum Error of 9.1739373754161e-6 on iteration 160.
+```
+
+```
+## ([0.10216, 0.0304916, -0.00186149, 0.000241209, -3.67407e-5], [0.129785, 0.120459, 0.103985, 0.085072, 0.0715016], Array{T,1} where T[[0.0, 0.0, 0.0, 0.0, 0.0], [1.21006e-10, 9.563e-12, -3.11245e-12, -8.45646e-14, -7.16761e-14], [1.63158e-10, 5.90729e-11, 2.95981e-11, 8.83107e-12, 6.0298e-13], [1.46648e-9, 1.21746e-9, 1.62343e-10, 2.15585e-12, -1.65855e-13], [6.6381e-9, 3.58878e-9, 8.01528e-11, -7.57041e-13, 4.593e-13], [1.75354e-8, 6.64997e-9, -1.89569e-10, 1.50556e-11, -5.24361e-12], [3.30229e-8, 7.28446e-9, -1.35862e-9, -2.4313e-11, -1.89576e-11], [3.06787e-8, -1.15984e-8, -4.79071e-9, -1.0933e-10, -4.39929e-11], [2.61422e-7, 3.12463e-7, 9.09027e-8, 9.34814e-9, 6.16241e-11], [2.72196e-6, 1.99399e-6, 1.57867e-7, -2.86014e-9, 4.08017e-10]  …  [0.0972189, 0.0287848, -0.00175121, 0.000228442, -3.71249e-5], [0.0997479, 0.0295045, -0.00181815, 0.00023769, -3.74242e-5], [0.101004, 0.0299742, -0.00184532, 0.000240435, -3.71857e-5], [0.101614, 0.0302349, -0.00185546, 0.000241102, -3.69774e-5], [0.101905, 0.0303686, -0.00185917, 0.000241227, -3.68572e-5], [0.102043, 0.0304344, -0.00186057, 0.000241234, -3.67955e-5], [0.102108, 0.0304661, -0.00186112, 0.000241225, -3.67653e-5], [0.102139, 0.0304812, -0.00186135, 0.000241216, -3.67508e-5], [0.102153, 0.0304883, -0.00186145, 0.000241212, -3.6744e-5], [0.10216, 0.0304916, -0.00186149, 0.000241209, -3.67407e-5]])
+```
+
+---
+
+# Now lets plot our solutions
+
+
+```julia
+capital_levels = range(params_fpi.capital_lower, params_fpi.capital_upper, length = 100)
+```
+
+```
+## 0.12885743408203118:0.00260318048650568:0.3865723022460935
+```
+
+```julia
+eval_points = scale_capital.(capital_levels)
+```
+
+```
+## 100-element Array{Float64,1}:
+##  -1.0               
+##  -0.9797979797979798
+##  -0.9595959595959596
+##  -0.9393939393939394
+##  -0.9191919191919192
+##  -0.898989898989899 
+##  -0.8787878787878788
+##  -0.8585858585858586
+##  -0.8383838383838385
+##  -0.8181818181818182
+##   ⋮                 
+##   0.8383838383838387
+##   0.8585858585858586
+##   0.8787878787878791
+##   0.898989898989899 
+##   0.9191919191919193
+##   0.9393939393939394
+##   0.95959595959596  
+##   0.9797979797979801
+##   1.0
+```
+
+```julia
+solution = similar(intermediate_coefficients)
+```
+
+```
+## 33-element Array{Array{T,1} where T,1}:
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+##    ⋮   
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+##  #undef
+```
+
+```julia
+
+for (iteration, coeffs) in enumerate(intermediate_coefficients)
+    solution[iteration] = [coeffs' * [cheb_polys.(capital, n) for n = 0:params_fpi.num_points - 1] for capital in eval_points];
+end
+```
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-34-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-35-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-36-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-37-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-38-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-39-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-40-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-41-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-42-J1.png" width="800" /&gt;
+
+---
+
+# Plot the final consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-43-J1.png" width="800" /&gt;
+
+---
+
+# Now lets try simulating
+
+
+```julia
+function simulate_model(params, solution_coeffs, time_horizon = 100)
+    capital_store = zeros(time_horizon + 1)
+    consumption_store = zeros(time_horizon)
+    capital_store[1] = params.k_0
+
+    for t = 1:time_horizon
+        capital = capital_store[t]
+        consumption_store[t] = consumption_euler(params, capital, solution_coeffs)
+        capital_store[t+1] = capital^params.alpha - consumption_store[t]
+    end
+
+    return consumption_store, capital_store
+
+end
+```
+
+```
+## simulate_model (generic function with 2 methods)
+```
+
+---
+
+# Now lets try simulating
+
+
+```julia
+time_horizon = 100;
+consumption, capital = simulate_model(params_fpi, solution_coeffs, time_horizon);
+plot(1:time_horizon, consumption, color = :red, linewidth = 4.0, tickfontsize = 14, guidefontsize = 14, label = "Consumption", legend = :right, grid = false, size = (500, 300));
+plot!(1:time_horizon, capital[1:end-1], color = :blue, linewidth = 4.0, linestyle = :dash, label = "Capital");
+plot!(1:time_horizon, params_fpi.steady_state*ones(time_horizon), color = :purple, linewidth = 2.0, linestyle = :dot, label = "Steady State Capital")
+```
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-45-J1.png" width="667" /&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
