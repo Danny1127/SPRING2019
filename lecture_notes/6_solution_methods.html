@@ -32,6 +32,18 @@ class: center, middle, inverse, title-slide
 3. Fixed point iteration
 4. Time iteration
 
+--
+
+Things to do:
+
+1. Install: `LinearAlgebra, Optim, Plots, Roots`
+2. Keep in mind that for VFI and TI we will be using optimization/rootfinding packages
+  + This matters because these packages typically only let the functions they work on have one input: the guesses for the maximizing input or root
+  + We get around this by expressing the function as a *closure*
+      + i.e. declare the function inside of a wrapper function that does the maximization/rootfinding so it can access the parameters in the wrapper function
+3. Keep in mind we will be working with about the simplest example possible,  
+more complex problems will be more difficult to solve
+
 ---
 
 # Solutions to economic models
@@ -626,8 +638,7 @@ Now we can form our consumption policy function as a fixed point by substituting
 The algorithm:
 
 1. Select the number of collocation points in each dimension and the domain of the approximation space
-2. Select an initial vector of coefficients `\(b_0\)` with the same number of elements as the collocation grid,  
-and initial guesses for consumption for the solver
+2. Select an initial vector of coefficients `\(b_0\)` with the same number of elements as the collocation grid
 3. Select a rule for convergence
 4. Construct the grid and basis matrix
 5. While convergence criterion `\(&gt;\)` tolerance
@@ -1078,6 +1089,421 @@ plot!(1:time_horizon, params_fpi.steady_state*ones(time_horizon), color = :purpl
 ```
 
 &lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-45-J1.png" width="667" /&gt;
+
+---
+
+# Method 3: Time iteration
+
+In TI we approximate the *policy function* with some flexible functional form `\(\Psi(k_t;b)\)` where `\(b\)` is a vector of coefficients
+
+--
+
+The difference vs FPI is we use root-finding techniques on our `\(n\)` node collocation grid where  
+we search for the scalar `\(c^{(p+1)}(k_t)\)` that solves
+`$$u'(c^{(p+1)}(k^j_t)) = \beta u'(C^{(p)}(f(k^j_t)-c^{(p+1)}(k^j_t))) f'(f(k^i_t)-c^{(p+1)}(k^j_t)) \,\,\,\, \text{for j } = 1,...,n$$`
+
+--
+
+`\(C^{(p)}()\)` is our current approximation to the policy function, and we are searching for a scalar `\(c^{(p+1)}(k^j_t)\)`, given our collocation node `\(k_t^j\)`, that solves the Euler equation root-finding problem
+
+--
+
+In the Euler equation `\(c^{(p+1)}\)` corresponds to today's policy function  
+while `\(C^{(p)}\)` corresponds to tomorrow's policy function: we are searching for today's policy that satisfies the Euler equation
+
+--
+
+As we iterate and `\(p\)` increases, `\(C^{(p)}(k)\)` should converge because of a *monotonicity property*
+
+--
+
+If `\(C'^{(p)}(k) &gt; 0\)`, and `\(C^{(p)}(k) &lt; C^{(p-1)}(k)\)`, then `\(C^{(p+1)}(k) &lt; C^{(p)}(k)\)` and `\(C'^{(p+1)}(k) &gt; 0\)`
+
+--
+
+It preserves the (first-order) shape of the policy function so it is reliable and convergent
+
+--
+
+Unfortunately time iteration tends to be slow, especially as the number of dimensions grows
+
+---
+
+# Method 3: Time iteration
+
+The algorithm:
+
+1. Select the number of collocation points in each dimension and the domain of the approximation space
+2. Select an initial vector of coefficients `\(b_0\)` with the same number of elements as the collocation grid,  
+and initial guesses for consumption for the solver
+3. Select a rule for convergence
+4. Construct the grid and basis matrix
+5. While convergence criterion `\(&gt;\)` tolerance
+  + Start iteration `\(p\)`
+  + Substitute `\(C(k^j_{t+1};b^{(p)})\)` into both sides
+  + Recover the `\(c^{(p+1)}(k^j_t) \in \mathbb{R}\)` scalar values that satisfy the equation conditional on `\(C(k_{t+1};b^{(p)})\)`
+  + Fit the polynomial to the values and recover a new vector of coefficients `\(\hat{b}^{(p+1)}\)`.
+  + Compute the vector of coefficients `\(b^{(p+1)}\)` for iteration `\(p+1\)` by  
+  `\(b^{(p+1)} = (1-\gamma) b^{(p)} + \gamma \hat{b}^{(p+1)}\)` where `\(\gamma \in (0,1).\)` (damping)
+6. Error check your approximation
+
+---
+
+# Step 1: Select the number of points and domain
+
+Put everything in a **named tuple** to make passing things easier
+
+
+```julia
+using LinearAlgebra, Optim, Plots, Roots
+params_ti = (alpha = 0.75, beta = 0.95, eta = 2, damp = 0.7,
+                steady_state = (0.75*0.95)^(1/(1-0.75)), k_0 = (0.75*0.95)^(1/(1-0.75))*0.5,
+                capital_upper = (0.75*0.95)^(1/(1-0.75))*1.5, capital_lower = (0.75*0.95)^(1/(1-0.75))*0.5,
+                num_points = 5, tolerance = 0.00001)
+```
+
+```
+## (alpha = 0.75, beta = 0.95, eta = 2, damp = 0.7, steady_state = 0.25771486816406236, k_0 = 0.12885743408203118, capital_upper = 0.3865723022460935, capital_lower = 0.12885743408203118, num_points = 5, tolerance = 1.0e-5)
+```
+
+```julia
+scale_capital(capital) = 2*(capital - params_ti.capital_lower)/(params_ti.capital_upper - params_ti.capital_lower) - 1
+```
+
+```
+## scale_capital (generic function with 1 method)
+```
+
+---
+
+# Step 2: Select an initial vector of coefficients `\(b_0\)`
+
+
+```julia
+coefficients = zeros(params_ti.num_points)
+```
+
+```
+## 5-element Array{Float64,1}:
+##  0.0
+##  0.0
+##  0.0
+##  0.0
+##  0.0
+```
+
+---
+
+# Step 3: Select a convergence rule
+
+Rule: maximum change in value on the grid &lt; 0.001%
+
+---
+
+# Step 4: Construct the grid and matrix of basis functions
+
+
+```julia
+function cheb_nodes(n)
+    nodes = [cos.(pi * (2k - 1)/(2n)) for k = 1:n]
+end;
+grid = cheb_nodes(params_ti.num_points) # [-1, 1] grid
+```
+
+```
+## 5-element Array{Float64,1}:
+##   0.9510565162951535   
+##   0.5877852522924731   
+##   6.123233995736766e-17
+##  -0.587785252292473    
+##  -0.9510565162951535
+```
+
+```julia
+capital_grid = (1 .+ grid)*(params_ti.capital_upper - params_ti.capital_lower)/2 .+ params_ti.capital_lower # actual capital grid
+```
+
+```
+## 5-element Array{Float64,1}:
+##  0.3802655705208513 
+##  0.33345536756572974
+##  0.2577148681640623 
+##  0.18197436876239492
+##  0.1351641658072734
+```
+
+---
+
+# Step 4: Construct the grid and basis matrix
+
+
+```julia
+# Chebyshev polynomial function
+function cheb_polys(x, n)
+    if n == 0
+        return 1                    # T_0(x) = 1
+    elseif n == 1
+        return x                    # T_1(x) = x
+    else
+        cheb_recursion(x, n) =
+            2x.*cheb_polys.(x, n - 1) .- cheb_polys.(x, n - 2)
+        return cheb_recursion(x, n) # T_n(x) = 2xT_{n-1}(x) - T_{n-2}(x)
+    end
+end;
+```
+
+---
+
+# Step 4a: Pre-invert your basis matrix
+
+
+```julia
+basis_matrix = [cheb_polys.(grid, n) for n = 0:params_ti.num_points - 1];
+basis_matrix = hcat(basis_matrix...);
+basis_inverse = basis_matrix\I
+```
+
+```
+## 5×5 Array{Float64,2}:
+##  0.2        0.2        0.2           0.2        0.2     
+##  0.380423   0.235114   5.55112e-17  -0.235114  -0.380423
+##  0.323607  -0.123607  -0.4          -0.123607   0.323607
+##  0.235114  -0.380423  -8.32667e-17   0.380423  -0.235114
+##  0.123607  -0.323607   0.4          -0.323607   0.123607
+```
+
+---
+
+# Step 5: Loop
+
+Construct a function that loops over the grid points and solves the Euler given `\(\Psi(x;b^{(p)})\)`
+
+
+```julia
+function loop_grid_ti(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+
+    consumption = similar(coefficients)
+    
+    for (iteration, capital) in enumerate(capital_grid)
+
+        function consumption_euler(consumption_guess)
+            capital_next = capital^params.alpha - consumption_guess
+
+            # Next period consumption based on policy approximant
+            consumption_next = coefficients' * [cheb_polys.(scale_capital(capital_next), n) for n = 0:params.num_points - 1]
+            consumption_next = max(1e-10, consumption_next)
+
+            # Organize Euler so it's g(c,k) = 0
+            euler_error = consumption_guess^(-params.eta) / 
+                (params.beta*consumption_next^(-params.eta)*params.alpha*(capital_next)^(params.alpha - 1)) - 1
+            return euler_error
+        end
+
+        # Search over consumption such that Euler = 0
+        consumption[iteration] = fzero(consumption_euler, 0., capital)
+
+    end
+    return consumption
+end
+```
+
+```
+## loop_grid_ti (generic function with 1 method)
+```
+
+---
+
+# Step 5: Loop
+
+
+```julia
+function solve_ti(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+    error = 1e10
+    iteration = 1
+    consumption = similar(coefficients)
+    consumption_prev = similar(coefficients)
+    coefficients_prev = similar(coefficients)
+    coefficients_store = Vector{Vector}(undef, 1)
+    coefficients_store[1] = coefficients
+    while error &gt; params.tolerance
+        consumption = loop_grid_ti(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+        if iteration &gt; 1
+            coefficients = params.damp*(basis_inverse*consumption) + (1 - params.damp)*coefficients_prev
+        else
+            coefficients = basis_inverse*consumption
+        end
+        error = maximum(abs.((consumption - consumption_prev)./(consumption_prev)))
+        consumption_prev = deepcopy(consumption)
+        coefficients_prev = deepcopy(coefficients)
+        if mod(iteration, 5) == 0
+            println("Maximum Error of $(error) on iteration $(iteration).")
+            append!(coefficients_store, [coefficients])
+        end
+        iteration += 1
+    end
+    return coefficients, consumption, coefficients_store
+end
+```
+
+```
+## solve_ti (generic function with 1 method)
+```
+
+---
+
+# Step 5: Loop
+
+
+```julia
+solution_coeffs, consumption, intermediate_coefficients =
+    solve_ti(params_ti, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+```
+
+```
+## Maximum Error of 0.06899533243252934 on iteration 5.
+## Maximum Error of 1.481484067728511 on iteration 10.
+## Maximum Error of 0.7160885861973345 on iteration 15.
+## Maximum Error of 0.3030828724582769 on iteration 20.
+## Maximum Error of 0.17473143140005473 on iteration 25.
+## Maximum Error of 505.4805245124472 on iteration 30.
+## Maximum Error of 1.193558398749873 on iteration 35.
+## Maximum Error of 0.28476702156043676 on iteration 40.
+## Maximum Error of 0.19536671877310902 on iteration 45.
+## Maximum Error of 235825.18031971727 on iteration 50.
+## Maximum Error of 1.4632905297050023 on iteration 55.
+## Maximum Error of 0.3819128797728578 on iteration 60.
+## Maximum Error of 0.2069777248265044 on iteration 65.
+## Maximum Error of 0.2882977765088428 on iteration 70.
+## Maximum Error of 1.5557188732619867 on iteration 75.
+## Maximum Error of 0.20172230910005298 on iteration 80.
+## Maximum Error of 0.06127838612896111 on iteration 85.
+## Maximum Error of 0.028153777682640414 on iteration 90.
+## Maximum Error of 0.014466543089840038 on iteration 95.
+## Maximum Error of 0.006878960963739522 on iteration 100.
+## Maximum Error of 0.003130222595497513 on iteration 105.
+## Maximum Error of 0.001391461005386054 on iteration 110.
+## Maximum Error of 0.0006111544900213002 on iteration 115.
+## Maximum Error of 0.00026681831311659726 on iteration 120.
+## Maximum Error of 0.00011614043376537828 on iteration 125.
+## Maximum Error of 5.047881962395737e-5 on iteration 130.
+## Maximum Error of 2.1923791129685817e-5 on iteration 135.
+## Maximum Error of 9.518360650356241e-6 on iteration 140.
+```
+
+```
+## ([0.10216, 0.0304922, -0.00186147, 0.000241205, -3.67394e-5], [0.129785, 0.120459, 0.103985, 0.085072, 0.0715015], Array{T,1} where T[[0.0, 0.0, 0.0, 0.0, 0.0], [1.27631e-10, 7.18378e-12, -5.17381e-12, -2.5865e-13, -8.83115e-14], [5.31714e-10, 5.52785e-10, 1.67035e-10, 1.81412e-11, -1.44782e-13], [8.31697e-9, 5.18754e-9, 2.03086e-10, -1.14914e-11, 1.70952e-12], [3.38628e-8, 1.2764e-8, -3.09125e-10, 4.02502e-11, -1.14148e-11], [7.52422e-8, 1.05702e-8, -4.4366e-9, -1.17443e-10, -4.94777e-11], [3.5815e-8, -1.44725e-8, 1.83471e-8, 5.22839e-9, -1.50423e-10], [8.64917e-7, 6.23977e-7, 2.58047e-8, -5.85306e-9, 3.60589e-10], [3.55731e-6, 1.27343e-6, -3.07228e-8, 1.08998e-8, -1.29267e-9], [8.395e-6, 1.5755e-6, -4.34529e-7, -2.04642e-8, -5.01397e-9]  …  [0.0937722, 0.0270497, -0.0017387, 0.000227151, -3.84818e-5], [0.0982859, 0.0288194, -0.00180844, 0.000237046, -3.773e-5], [0.10043, 0.0297236, -0.00183945, 0.000239957, -3.72189e-5], [0.101402, 0.0301499, -0.00185236, 0.000240796, -3.69575e-5], [0.101832, 0.0303427, -0.00185768, 0.000241058, -3.68356e-5], [0.10202, 0.0304282, -0.00185989, 0.000241149, -3.67809e-5], [0.102102, 0.0304657, -0.00186083, 0.000241183, -3.67567e-5], [0.102138, 0.030482, -0.00186123, 0.000241197, -3.67461e-5], [0.102154, 0.0304891, -0.0018614, 0.000241203, -3.67414e-5], [0.10216, 0.0304922, -0.00186147, 0.000241205, -3.67394e-5]])
+```
+
+---
+
+# Now lets plot our solutions
+
+
+```julia
+capital_levels = range(params_ti.capital_lower, params_ti.capital_upper, length = 100);
+eval_points = scale_capital.(capital_levels);
+solution = similar(intermediate_coefficients);
+
+for (iteration, coeffs) in enumerate(intermediate_coefficients)
+    solution[iteration] = [coeffs' * [cheb_polys.(capital, n) for n = 0:params_ti.num_points - 1] for capital in eval_points];
+end
+```
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-55-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-56-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-57-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-58-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-59-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-60-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-61-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-62-J1.png" width="800" /&gt;
+
+---
+
+# Plot the consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-63-J1.png" width="800" /&gt;
+
+---
+
+# Plot the final consumption policy function
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-64-J1.png" width="800" /&gt;
+
+---
+
+# Now lets try simulating
+
+
+```julia
+function simulate_model(params, solution_coeffs, time_horizon = 100)
+    capital_store = zeros(time_horizon + 1)
+    consumption_store = zeros(time_horizon)
+    capital_store[1] = params.k_0
+
+    for t = 1:time_horizon
+        capital = capital_store[t]
+        consumption_store[t] = solution_coeffs' * [cheb_polys.(scale_capital(capital), n) for n = 0:params.num_points - 1]
+        capital_store[t+1] = capital^params.alpha - consumption_store[t]
+    end
+
+    return consumption_store, capital_store
+end;
+```
+
+---
+
+# Now lets try simulating
+
+
+```julia
+time_horizon = 100;
+consumption, capital = simulate_model(params_ti, solution_coeffs, time_horizon);
+plot(1:time_horizon, consumption, color = :red, linewidth = 4.0, tickfontsize = 14, guidefontsize = 14, label = "Consumption", legend = :right, grid = false, size = (500, 300));
+plot!(1:time_horizon, capital[1:end-1], color = :blue, linewidth = 4.0, linestyle = :dash, label = "Capital");
+plot!(1:time_horizon, params_ti.steady_state*ones(time_horizon), color = :purple, linewidth = 2.0, linestyle = :dot, label = "Steady State Capital")
+```
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-66-J1.png" width="667" /&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

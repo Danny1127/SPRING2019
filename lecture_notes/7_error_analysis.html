@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Errors in numerical dynamic models</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Ivan Rudik" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/metropolis.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/metropolis-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Errors in numerical dynamic models
+## <html>
+<div style="float:left">
+
+</div>
+<hr color='#459DE0' size=5px width=1100px>
+</html>
+### Ivan Rudik
+### AEM 7130
+
+---
+
+
+# Roadmap
+
+1. Good general practice
+2. The Euler equation error approach 
+3. The `\(\chi\)`^2 approach
+4. An approach to put a lower bound on errors
+
+--
+
+Things you will need:
+
+1. VFI/FPI/TI code from the last section to use to check errors
+
+---
+
+# Good general practices
+
+Here are some good general practices for solving a problem quick and accurately:
+
+- Solve a coarser problem with fewer nodes and use the final solution as the initial guess for a problem with more nodes
+  + In practice this tends to improve algorithm stability and speed
+--
+
+- Keep track if you are evaluating your value/policy function approximants **outside their defined domain**
+  + This can be caused by actually transitioning outside the domain (bad),  
+  or evaluating a state's quadrature node outside the domain (not quite as bad)
+  + This can cause serious convergence problems because the routine will be extrapolating outside  
+  the domain where it is well-defined, typically resulting in a bad approximation
+--
+
+- Determine which dimensions contain most of the curvature
+  + Increase the degree of approximation along these dimensions, decrease on others
+--
+
+- Decent sized changes to your domain or number of collocation/quadrature nodes  
+should not sigificantly change your solution
+      
+---
+
+# Good general practices
+
+- Keep the function being maximized as light as possible
+  + It will be called thousands or millions of times so each line of code counts
+  + **BE AWARE OF TYPE STABILITY IN FUNCTIONS CALLED FREQUENTLY**
+  + This hasn't mattered too much in our simple examples, but it will in research paper quality problems
+--
+
+- Get your domain as tight as possible
+  + This is one of the easiest yet biggest payoff things you can do
+  + This will reduce the degree of approximation you require and can substantially reduce computing time
+      - Cai et al. (2018) solve a 6-stated problem in minutes with a 4th degree approximation on a tight and time-varying grid
+      - Rudik (2019) solves a difficult 5-stated problem in ~30 minutes on a tight and time-varying grid
+      - Lemoine and Traeger (2014) takes a day on a wide and time-invariant grid
+--
+- Solve a determinsitic version of your model using another method that is known to be accurate
+  + e.g. solve an open-loop version of the model using a KNITRO, SNOPT, CONOPT, etc
+  + Compare open-loop to feedback solution
+  
+---
+
+# Euler equation errors
+
+The most common way to check model accuracy is by determining the error in the Euler equation as suggested by Judd (1992)
+
+--
+
+We know along any equilibrium trajectory the Euler equation must be satisfied exactly
+
+--
+
+Any errors in the Euler equation of a simulated set of trajectories must be due to numerical error
+
+--
+
+How do we compute the Euler error? Let us return to our growth example which had an Euler equation
+`$$u'(c_t) = \beta u'(c_{t+1}) f'(k_{t+1})$$`
+
+---
+
+# Euler equation errors
+
+`$$u'(c_t) = \beta u'(c_{t+1}) f'(k_{t+1})$$`
+
+Notice that if we:
+
+1. invert the marginal utility function on the left hand side
+2. divide both sides by `\(c_t\)`, and then subtract the remaining 1
+
+we arrive at an expression of the Euler equation that equals zero analytically, and is expressed in consumption units
+`$$\frac{u'^{-1}(\beta \, u'(c_{t+1}) f'(k_{t+1}))}{c_t} - 1 = 0$$`
+
+However when using our approximation policy function `\(C^{(p)}(k_{t})\)` we get
+`$$EEE \equiv \frac{u'^{-1}(\beta \, u'(C^{(p)}(k_{t+1})) f'(k_{t+1}))}{C^{(p)}(k_{t})} - 1$$`
+This is the Euler equation error (EEE) and will not necessarily be equal to zero
+
+---
+
+# Euler equation errors
+
+Since EEE is in consumption units it has a nice economic interpretation: the relative optimization error due to following the approximated policy rule instead of the optimal policy rule
+
+--
+
+For example, if EEE = `\(10^{-3}\)`, then we are making a 1 dollar mistake  
+for every 1000 dollars spent along our approximated policy trajectory
+
+--
+
+What is nice about the EEE, is that under certain conditions (Santos, 2000) the error in the policy rule is the same order of magnitude of the EEE, and the change in welfare is the square of the EEE
+
+--
+
+The required assumptions are
+- Compactness and convexity of the feasible set
+- Smoothness and strong concavity of the payoff function
+- Interior solution
+
+---
+
+# General dynamic programming errors
+
+Santos and Vigo-Aguiar (1998) show us how to study the error of a DP model
+
+--
+
+Let:
+- `\(\beta\)` be the discount factor
+- `\(||\cdot||\)` be the sup norm
+- `\(h\)` be the maximum distance between any two grid points that form a simplex in our approximation grid
+- `\(\gamma = ||D^2 V||\)`, the maximal element of the Hessian of the true value function `\(V\)`
+- `\(V^h\)` be our value function approximant on our grid with maximum distance `\(h\)`
+
+---
+
+# General dynamic programming errors
+
+Assume the following points are true:
+
+1. The state space is an open set, and the feasible set is convex
+--
+
+2. The flow payoff function is bounded, twice-continuously differentiable, and has bounded first and second order derivatives
+--
+
+3. There exists some constant `\(\eta &gt; 0\)` such that `\(v(k,k',z_t) + (\eta/2)||k'||^2\)` is concave as a function on `\((k,k')\)`
+--
+
+4. For each `\((k_0,z_t)\)` there exists an optimal solution to the Bellman equation such that the equilibrium path is on the interior of the feasible set
+--
+
+5. The transition function for exogenous processes is twice-continuously differentiable, and the derivative of the transition function with respect to the exogenous state, and the mixed derivative with respect to the exogenous state and noise term are bounded, and jointly continuous over the state space
+--
+
+6. There also exist nonnegative constants `\(C \geq 0\)`, `\(0 \leq \rho &lt; \beta^{-1/2}\)` such that the sup norms of the first and second order partial derivatives of the exogenous state `\(z_t\)` with respect to `\(z_0\)` are less than `\(C\rho^t\)` for all `\(t\)`
+--
+
+In general these are standard assumptions satisfied by most problems
+
+---
+
+# General dynamic programming errors
+
+This gives us the following theorem:
+*Let `\(V\)` be the fixed point of the Bellman equation, and let `\(V^h\)` be the fixed point of the Bellman equation on our collocation grid. Under assumptions 1-6 it must be that*
+`$$||V-V^h|| \leq \frac{\gamma}{2(1-\beta)}h^2$$`
+
+--
+
+The maximal error in our value function can thus be bounded above and is decreasing quadratically in the resolution of our grid
+
+--
+
+This also leads to a corollary,
+*\begin{corollary}
+*Let `\(g\)` be the policy function corresponding to `\(V\)` and let `\(g^h\)` be the policy function corresponding to `\(V^h\)`. At all collocation grid points we have that*
+`$$||g - g^h|| \leq \sqrt{\frac{2\gamma}{\eta(1-\beta)}}\,h$$`
+
+---
+
+# General dynamic programming errors
+
+A few points:
+
+- `\(\gamma\)` is defined as the sup matrix norm of the Hessian of the *true* value function which is generally unknown
+
+--
+
+However we can put an upper bound on this using inequalities (3.2)-(3.5) in Santos and Vigo-Aguiar (1998)
+
+--
+
+- The linear convergence of the policy function can be extended to any point in the domain, not just the collocation nodes
+
+
+---
+
+# Alternatives
+
+Some problems do not permit an Euler equation
+
+--
+
+You can always error check other equilibrium conditions (Bellman, etc) by finding ways to put them into consumption units
+
+-- 
+
+They will not have the same policy rule and welfare error bounds though
+
+---
+
+# `\(\chi^2\)` error tests
+
+den Haan and Marcet (1994) provide an alternative way to test the approximation quality of a model via hypothesis testing
+
+--
+
+Suppose that we have some set of variables `\(y_t\)` that completely characterize our state at time `\(t\)` and can be exogenous or endogenous
+
+--
+
+Typically we will have a system of equations such that the following must be satisfied at a solution
+`$$f(y_t) = E[\phi(y_{t+1},y_{t+2},...)|\Omega_t]$$`
+
+here `\(f:\mathbb{R}^n\rightarrow\mathbb{R}^m\)` and `\(\phi:\mathbb{R}^n\times\mathbb{R}^\infty\rightarrow\mathbb{R}^m\)` are known functions, and `\(\Omega_t\)` is the current information set
+
+--
+
+This is very general and can accommodate most types of models
+
+--
+
+If the above conditions are satisfied then we must have that the residual
+`$$u_{t+1} = \phi(y_{t+1},y_{t+2},...)-f(y_t)$$`
+satisfies the following
+`$$E[u_{t+1} \otimes h(x_t)] = 0$$`
+for any `\(k\)`-dimensional vector `\(x_t\)` in `\(\Omega_t\)`, and any function `\(h:\mathbb{R}^K\rightarrow\mathbb{R}^q\)`
+
+---
+
+# `\(\chi^2\)` error tests
+
+`$$E[u_{t+1} \otimes h(x_t)] = 0$$`
+
+What we want to do is to test whether this equation is true along a given simulated path
+
+--
+
+This is basically a moment condition
+
+--
+
+If we simulate a series of arbitrary length from our model with some solution method and get some `\(\{y^j_t\}_{t=1:T}\)`, we can find `\(\{u^j_{t+1},x^j_t\}_{t=1:T}\)` and compute the sample analog of the Kronecker product
+`$$B^j_T = \frac{1}{T}\sum_{t=1}^T u^j_{t+1} \otimes h(x_t^j)$$`
+
+--
+
+Clearly `\(B^j_T\)` converges to zero if we are using the exact model
+
+---
+
+# `\(\chi^2\)` error tests
+
+We can also make it arbitrarily small by picking `\(h\)` to have small values, so we need to be careful
+
+--
+
+We avoid this problem by constructing a test statistic for `\(B^j_T\)` under the hypothesis our model is accurate
+
+--
+
+This test statistic is
+`$$T(B^j_T)'(A^j_T)^{-1}B^j_T$$`
+where `\(A^j_T\)` is a consistent estimate of
+`$$\sum_{t=-\infty}^{\infty} E[(u_{t+1} \otimes h(x_t))(u_{t+1} \otimes h(x_t))']$$`
+
+--
+
+If `\(\phi\)` only depends on `\(y_{t+1}\)` then we have the simplest case
+`$$A^j_T = \frac{1}{T}\sum_{t=1}^T u_{t+1}^2 h(x_t) h(x_t)'$$`
+
+---
+
+# `\(\chi^2\)` error tests
+
+`$$A^j_T = \frac{1}{T}\sum_{t=1}^T u_{t+1}^2 h(x_t) h(x_t)'$$`
+
+This test statistic will converge to a `\(\chi^2\)` distribution with `\(qm\)` degrees of freedom with a null hypothesis that `\(E[u_{t+1} \otimes h(x_t)] = 0\)`
+
+--
+
+If the value of the test statistic is in the upper or lower critical regions, we can reject that we have a good approximation
+
+--
+
+As `\(T\rightarrow \infty\)` we will eventually reject the null. Why?
+
+--
+
+No approximating model is perfect and with enough data, errors continually accumulate and the test statistic will learn its not the true model
+
+--
+
+To control for this they suggest repeating the rest for many simulations and then checking how many of the test statistics are in the upper and lower 5\% of the distribution
+
+--
+
+If the approximation is good, both should be about 5\%: this is a good test for checking how errors accumulate over time
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "bash",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
