@@ -179,7 +179,7 @@ capital_grid = (1 .+ grid)*(params.capital_upper - params.capital_lower)/2 .+ pa
 # Chebyshev polynomial function
 function cheb_polys(x, n)
     if n == 0
-        return 1                    # T_0(x) = 1
+        return ones(size(x))                    # T_0(x) = 1
     elseif n == 1
         return x                    # T_1(x) = x
     else
@@ -242,37 +242,23 @@ end
 
 ```{julia}
 function solve_vfi(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
-
-    max_value = -.0*ones(params.num_points);
-    error = 1e10;
-    value_prev = .1*ones(params.num_points);
-
     iteration = 1
-
+    error = 1e10;
+    max_value = -.0*ones(params.num_points);
+    value_prev = .1*ones(params.num_points);
     coefficients_store = Vector{Vector}(undef, 1)
     coefficients_store[1] = coefficients
-    
     while error > params.tolerance
-
         max_value = loop_grid(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
-
-        # New coefficients
-        coefficients = basis_inverse*max_value
-
-        # Maximum relative value change
+        coefficients = basis_inverse*max_value # \Psi \ y
         error = maximum(abs.((max_value - value_prev)./(value_prev)))
-
         value_prev = deepcopy(max_value)
-
         if mod(iteration, 5) == 0
             println("Maximum Error of $(error) on iteration $(iteration).")
             append!(coefficients_store, [coefficients])
         end
-
         iteration += 1
-
     end
-
     return coefficients, max_value, coefficients_store
 end
 ```
@@ -629,7 +615,7 @@ capital_grid = (1 .+ grid)*(params_fpi.capital_upper - params_fpi.capital_lower)
 # Chebyshev polynomial function
 function cheb_polys(x, n)
     if n == 0
-        return 1                    # T_0(x) = 1
+        return ones(size(x))                    # T_0(x) = 1
     elseif n == 1
         return x                    # T_1(x) = x
     else
@@ -1008,7 +994,7 @@ capital_grid = (1 .+ grid)*(params_ti.capital_upper - params_ti.capital_lower)/2
 # Chebyshev polynomial function
 function cheb_polys(x, n)
     if n == 0
-        return 1                    # T_0(x) = 1
+        return ones(size(x))                    # T_0(x) = 1
     elseif n == 1
         return x                    # T_1(x) = x
     else

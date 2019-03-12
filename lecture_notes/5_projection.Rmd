@@ -851,7 +851,7 @@ If you can't get the recurrence relation to work, you can use an alternative: $$
 # Chebyshev polynomial function
 function cheb_polys(x, n)
     if n == 0
-        return 1                    # T_0(x) = 1
+        return ones(size(x))        # T_0(x) = 1
     elseif n == 1
         return x                    # T_1(x) = x
     else
