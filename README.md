@@ -30,5 +30,5 @@ Week 2/3: [Intro to Git and Version Control](https://raw.githack.com/AEM7130/SPR
 Week 3/4: [Optimization](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/3_optimization.html)  
 Week 4: [Discrete Time Dynamics](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/4_dynamics.html)   
 Week 5/6: [Projection Methods](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/5_projection.html)  
-Week 6/7: [Solution Methods for Discrete Time Dynamic Models](https://github.com/AEM7130/SPRING2019)  
+Week 6/7: [Solution Methods for Discrete Time Dynamic Models](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/6_solution_methods.html)  
 Week 7: [Error Analysis for Dynamic Models](https://github.com/AEM7130/SPRING2019)
