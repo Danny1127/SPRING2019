@@ -136,6 +136,287 @@ The required assumptions are
 
 ---
 
+# EEE practice
+
+Let's go back to our previous example and code and compute the EEE
+
+Recall our problem was
+
+--
+
+\begin{gather}
+	\max_{\left\{c_t \right\}_{t=0}^\infty} \sum_{t=1}^\infty \beta^t u(c_t) \notag \\
+	 \text{subject to:} \,\,\,\,\, k_{t+1} = f(k_t) - c_t \notag 
+\end{gather}
+where both consumption and time $t+1$ capital are positive, $k(0) = k_0$, $\alpha > 0$, and $\beta \in (0,1)$
+
+--
+
+With parameters given by
+
+```{julia}
+using LinearAlgebra, Optim, Plots 
+params = (alpha = 0.75, beta = 0.95, eta = 2,
+                steady_state = (0.75*0.95)^(1/(1 - 0.75)), k_0 = (0.75*0.95)^(1/(1 - 0.75))*.75,
+                capital_upper = (0.75*0.95)^(1/(1 - 0.75))*1.5, capital_lower = (0.75*0.95)^(1/(1 - 0.75))/2,
+                num_points = 7, tolerance = 0.0001)
+```
+
+---
+
+# Step 2: Select an initial vector of coefficients $b_0$
+
+```{julia}
+coefficients = .1*ones(params.num_points)
+```
+
+---
+
+# Step 3: Select a convergence rule
+
+Rule: maximum change in value on the grid < 0.001%
+
+---
+
+# Step 4: Construct the grid and matrix of basis functions
+
+```{julia}
+function cheb_nodes(n)
+    nodes = [cos.(pi * (2k - 1)/(2n)) for k = 1:n]
+end;
+grid = cheb_nodes(params.num_points) # [-1, 1] grid
+capital_grid = (1 .+ grid)*(params.capital_upper - params.capital_lower)/2 .+ params.capital_lower # actual capital grid
+```
+
+---
+
+# Step 4: Construct the grid and basis matrix
+
+```{julia}
+# Chebyshev polynomial function
+function cheb_polys(x, n)
+    if n == 0
+        return 1                  # T_0(x) = 1
+    elseif n == 1
+        return x                    # T_1(x) = x
+    else
+        cheb_recursion(x, n) =
+            2x.*cheb_polys.(x, n - 1) .- cheb_polys.(x, n - 2)
+        return cheb_recursion(x, n) # T_n(x) = 2xT_{n-1}(x) - T_{n-2}(x)
+    end
+end;
+```
+
+---
+
+# Step 4a: Pre-invert your basis matrix
+
+Hot tip: you will be using the exact same basis matrix in each loop iteration: just pre-invert it to save time
+
+```{julia}
+basis_matrix = [cheb_polys.(grid, n) for n = 0:params.num_points - 1];
+basis_matrix = hcat(basis_matrix...)
+basis_inverse = basis_matrix\I
+```
+
+---
+
+# Step 5: Loop
+
+Construct a function that loops over the grid points and solves the Bellman given $\Gamma(x;b^{(p)})$
+
+```{julia}
+function loop_grid(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+
+    max_value = -.0*ones(params.num_points);
+    scale_capital(capital) = 2*(capital - params.capital_lower)/(params.capital_upper - params.capital_lower) - 1
+
+    # Compute next period's consumption from the Euler equation
+    for (iteration, capital) in enumerate(capital_grid)
+
+        function bellman(consumption)
+            capital_next = capital^params.alpha - consumption
+            capital_next_scaled = scale_capital(capital_next)
+            cont_value = coefficients' * [cheb_polys.(capital_next_scaled, n) for n = 0:params.num_points - 1]
+            value_out = (consumption)^(1-params.eta)/(1-params.eta) + params.beta*cont_value
+            return -value_out
+        end;
+
+
+        results = optimize(bellman, 0.00*capital^params.alpha, 0.99*capital^params.alpha)
+
+        # Compute new value
+        max_value[iteration] = -Optim.minimum(results)
+    end
+
+    return max_value
+end
+```
+
+---
+
+# Step 5: Loop
+
+```{julia}
+function solve_vfi(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+    iteration = 1
+    error = 1e10;
+    max_value = -.0*ones(params.num_points);
+    value_prev = .1*ones(params.num_points);
+    coefficients_store = Vector{Vector}(undef, 1)
+    coefficients_store[1] = coefficients
+    while error > params.tolerance
+        max_value = loop_grid(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+        coefficients = basis_inverse*max_value # \Psi \ y
+        error = maximum(abs.((max_value - value_prev)./(value_prev)))
+        value_prev = deepcopy(max_value)
+        if mod(iteration, 5) == 0
+            println("Maximum Error of $(error) on iteration $(iteration).")
+            append!(coefficients_store, [coefficients])
+        end
+        iteration += 1
+    end
+    return coefficients, max_value, coefficients_store
+end
+```
+
+---
+
+# Step 5: Loop
+
+```{julia}
+solution_coeffs, max_value, intermediate_coefficients = 
+    solve_vfi(params, basis_inverse, basis_matrix, grid, capital_grid, coefficients)
+```
+
+---
+
+# Step 6: Simulate
+
+```{julia}
+scale_capital(capital) = 2*(capital - params.capital_lower)/(params.capital_upper - params.capital_lower) - 1;
+
+function simulate_model(params, solution_coeffs, time_horizon = 100)
+    capital_store = zeros(time_horizon + 1)
+    consumption_store = zeros(time_horizon)
+    capital_store[1] = params.k_0
+    
+    for t = 1:time_horizon
+        capital = capital_store[t]
+        function bellman(consumption)
+            capital_next = capital^params.alpha - consumption
+            capital_next_scaled = scale_capital(capital_next)
+            cont_value = solution_coeffs' * [cheb_polys.(capital_next_scaled, n) for n = 0:params.num_points - 1]
+            value_out = (consumption)^(1-params.eta)/(1-params.eta) + params.beta*cont_value
+            return -value_out
+        end;
+
+        results = optimize(bellman, 0.0, capital^params.alpha)
+
+        # Compute new value
+        consumption_store[t] = Optim.minimizer(results)
+        capital_store[t+1] = capital^params.alpha - consumption_store[t]
+    end
+
+    return consumption_store, capital_store
+end;
+```
+
+---
+
+# Step 6: Simulate
+
+```{julia}
+time_horizon = 100;
+consumption, capital = simulate_model(params, solution_coeffs, time_horizon);
+```
+
+---
+
+# Step 7: Compute Euler errors
+
+```{julia}
+# Compute Euler equation error at each time period
+# Put into log10 terms of the absolute value of the error. More negative numbers are better.
+# -4 means error is 10^-4, -3 means the error is 10^-3, etc.
+euler_error = log10.(abs.(
+  (params.beta*consumption[2:end].^(-params.eta).*
+     params.alpha.*capital[2:end-1].^(params.alpha-1)).^(-1/params.eta)./
+    consumption[1:end-1] .- 1))
+```
+
+---
+
+# Euler error along eq trajectory
+
+```{julia, echo=FALSE}
+plot(1:time_horizon - 1, euler_error,
+    grid = false, 
+    legend = false, 
+    size = (600, 400), 
+    xlabel = "Year", 
+    ylabel = "Euler Error (log10)", 
+    tickfontsize = 14, 
+    guidefontsize = 14,
+    linewidth = 4)
+```
+
+---
+
+# Euler error over the entire domain
+
+```{julia}
+num_points = 1000
+euler_error = zeros(num_points)
+capital_levels = range(params.capital_lower, params.capital_upper, length = num_points);
+
+function simulate_model_ee(params, solution_coeffs, capital_levels)
+    consumption_store = similar(capital_levels)
+    for (iteration, capital) in enumerate(capital_levels)
+        function bellman(consumption)
+            capital_next = capital^params.alpha - consumption
+            capital_next_scaled = scale_capital(capital_next)
+            cont_value = solution_coeffs' * [cheb_polys.(capital_next_scaled, n) for n = 0:params.num_points - 1]
+            value_out = (consumption)^(1-params.eta)/(1-params.eta) + params.beta*cont_value
+            return -value_out
+        end;
+        results = optimize(bellman, 0.0, capital^params.alpha)
+        consumption_store[iteration] = Optim.minimizer(results)
+    end
+    return consumption_store
+end;
+num_points = 1000;
+euler_error = zeros(num_points);
+capital_levels = range(params.capital_lower, params.capital_upper, length = num_points);
+consumption = simulate_model_ee(params, solution_coeffs, capital_levels);
+euler_error = log10.(abs.((params.beta*consumption[2:end].^(-params.eta).*params.alpha.*capital_levels[2:end].^(params.alpha-1)).^(-1/params.eta)./consumption[1:end-1] .- 1))
+```
+
+---
+
+# Euler error over the entire domain
+
+```{julia, echo=FALSE}
+# Plot
+plot(capital_levels[1:end-1], euler_error,
+    grid = false, 
+    legend = false, 
+    size = (600, 400), 
+    xlabel = "Capital", 
+    ylabel = "Euler Error (log10)", 
+    tickfontsize = 14, 
+    guidefontsize = 14,
+    linewidth = 4)
+```
+
+---
+
+# Your turn
+
+## Now you do it for the FPI and TI examples
+
+---
+
 # General dynamic programming errors
 
 Santos and Vigo-Aguiar (1998) show us how to study the error of a DP model
@@ -179,7 +460,7 @@ In general these are standard assumptions satisfied by most problems
 
 # General dynamic programming errors
 
-This gives us the following theorem:
+This gives us the following theorem:  
 *Let $V$ be the fixed point of the Bellman equation, and let $V^h$ be the fixed point of the Bellman equation on our collocation grid. Under assumptions 1-6 it must be that*
 $$||V-V^h|| \leq \frac{\gamma}{2(1-\beta)}h^2$$
 
@@ -189,8 +470,7 @@ The maximal error in our value function can thus be bounded above and is decreas
 
 --
 
-This also leads to a corollary,
-*\begin{corollary}
+This also leads to a corollary,  
 *Let $g$ be the policy function corresponding to $V$ and let $g^h$ be the policy function corresponding to $V^h$. At all collocation grid points we have that*
 $$||g - g^h|| \leq \sqrt{\frac{2\gamma}{\eta(1-\beta)}}\,h$$
 

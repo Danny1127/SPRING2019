@@ -412,7 +412,7 @@ eval_points = scale_capital.(capital_levels);
 
 solution = similar(intermediate_coefficients);
 
-# Compute optimal consumption at all capital grid points
+# Compute optimal value at all capital grid points
 for (iteration, coeffs) in enumerate(intermediate_coefficients)
     solution[iteration] = [coeffs' * [cheb_polys.(capital, n) for n = 0:params.num_points - 1] for capital in eval_points];
 end
@@ -514,16 +514,7 @@ end;
 
 # Now lets try simulating
 
-
-```julia
-time_horizon = 100;
-consumption, capital = simulate_model(params, solution_coeffs, time_horizon);
-plot(1:time_horizon, consumption, color = :red, linewidth = 4.0, label = "Consumption", legend = :right, size = (500, 300));
-plot!(1:time_horizon, capital[1:end-1], color = :blue, linewidth = 4.0, linestyle = :dash, label = "Capital");
-plot!(1:time_horizon, params.steady_state*ones(time_horizon), color = :purple, linewidth = 2.0, linestyle = :dot, label = "Analytic Steady State")
-```
-
-&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-21-J1.png" width="667" /&gt;
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-21-J1.png" width="800" /&gt;
 
 ---
 
@@ -905,70 +896,9 @@ solution_coeffs, consumption, intermediate_coefficients =
 
 
 ```julia
-capital_levels = range(params_fpi.capital_lower, params_fpi.capital_upper, length = 100)
-```
-
-```
-## 0.12885743408203118:0.00260318048650568:0.3865723022460935
-```
-
-```julia
-eval_points = scale_capital.(capital_levels)
-```
-
-```
-## 100-element Array{Float64,1}:
-##  -1.0               
-##  -0.9797979797979798
-##  -0.9595959595959596
-##  -0.9393939393939394
-##  -0.9191919191919192
-##  -0.898989898989899 
-##  -0.8787878787878788
-##  -0.8585858585858586
-##  -0.8383838383838385
-##  -0.8181818181818182
-##   ⋮                 
-##   0.8383838383838387
-##   0.8585858585858586
-##   0.8787878787878791
-##   0.898989898989899 
-##   0.9191919191919193
-##   0.9393939393939394
-##   0.95959595959596  
-##   0.9797979797979801
-##   1.0
-```
-
-```julia
-solution = similar(intermediate_coefficients)
-```
-
-```
-## 33-element Array{Array{T,1} where T,1}:
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-##    ⋮   
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-##  #undef
-```
-
-```julia
+capital_levels = range(params_fpi.capital_lower, params_fpi.capital_upper, length = 100);
+eval_points = scale_capital.(capital_levels);
+solution = similar(intermediate_coefficients);
 
 for (iteration, coeffs) in enumerate(intermediate_coefficients)
     solution[iteration] = [coeffs' * [cheb_polys.(capital, n) for n = 0:params_fpi.num_points - 1] for capital in eval_points];
@@ -1490,6 +1420,255 @@ plot!(1:time_horizon, params_ti.steady_state*ones(time_horizon), color = :purple
 ```
 
 &lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-66-J1.png" width="667" /&gt;
+
+---
+
+# A short overview of discretization + VFI
+
+When we use discretization methods we create a grid on our state space, typically evenly spaced
+
+--
+
+This becomes our **actual** state space, not just collocation points
+
+--
+
+How does it work?
+
+--
+
+The discretized state space implies a discretized control space
+
+--
+
+If there are only a finite number of states tomorrow conditional on the current state,  
+then there is only a finite number of valid controls
+
+--
+
+This makes solving easy!
+
+--
+
+Search over all possible controls today until you find the one that yields the highest value of the RHS of the Bellman:  
+just requires looping and a max operator
+
+--
+
+The maximized value is the new value of this discretized state
+
+--
+
+3 loops now: outer VFI loop, middle capital grid loop, inner consumption loop
+
+---
+
+# Discretizing the state space
+
+
+```julia
+using LinearAlgebra, Optim, Plots 
+params_dis = (alpha = 0.75, beta = 0.95, eta = 2,
+                steady_state = (0.75*0.95)^(1/(1 - 0.75)), k_0 = (0.75*0.95)^(1/(1 - 0.75))*.75,
+                capital_upper = (0.75*0.95)^(1/(1 - 0.75))*1.5, capital_lower = (0.75*0.95)^(1/(1 - 0.75))/2,
+                tolerance = 0.0001, max_iterations = 1000)
+```
+
+```
+## (alpha = 0.75, beta = 0.95, eta = 2, steady_state = 0.25771486816406236, k_0 = 0.19328615112304676, capital_upper = 0.3865723022460935, capital_lower = 0.12885743408203118, tolerance = 0.0001, max_iterations = 1000)
+```
+
+---
+
+# Discretizing the state space
+
+
+```julia
+function iterate_value(grid, params) 
+    grid_size = size(grid, 1)
+    V = zeros(grid_size, 1)
+    V_prev = zeros(grid_size, 1)
+    V_store = Array{Float64}(undef, grid_size, params.max_iterations)
+    max_diff = 1e10
+    it = 1
+    while max_diff &gt; params.tolerance &amp;&amp; it &lt;= params.max_iterations
+        for (iteration, grid_point) in enumerate(grid)
+            # possible consumption values (output + remaining capital - capital next period)
+            c_vec = grid_point.^params.alpha .- grid
+            value_max = -Inf
+            # loop over possible consumption values and find the one that maximizes
+            # the right hand side of the Bellman, search over ones with positive consumption
+            for (it_inner, consumption) in enumerate(c_vec[c_vec .&gt; 0])
+                value_temp = consumption^(1 - params.eta)/(1 - params.eta) + params.beta*V[it_inner]
+                value_max = max(value_temp, value_max)
+            end
+            V[iteration] = value_max
+        end
+        max_diff = maximum(abs.(V .- V_prev))
+        if mod(it,10) == 0
+            println("Current maximum value difference at iteration $it is $max_diff.")
+        end
+        V_prev = copy(V)
+        V_store[:,it] = V
+        if it == params.max_iterations
+            println("Hit maximum iterations")
+            break
+        end
+        it += 1
+    end
+    V_store = V_store[:, 1:it-1]
+    return V, V_store
+end
+```
+
+```
+## iterate_value (generic function with 1 method)
+```
+
+---
+
+# Discretizing the state space
+
+
+```julia
+        max_diff = maximum(abs.((V .- V_prev)./V_prev))
+        if mod(it,10) == 0
+            println("Current maximum value difference at iteration $it is $max_diff.")
+        end
+        V_prev = copy(V)
+        V_store[:,it] = V
+        if it == params.max_iterations
+            println("Hit maximum iterations")
+            break
+        end
+        it += 1
+    end
+    V_store = V_store[:, 1:it-1]
+    return V, V_store
+end
+```
+
+---
+
+# Discretizing the state space
+
+
+```julia
+grid_size = 3;
+grid = collect(range(params_dis.capital_lower, 
+    stop = params_dis.capital_upper, 
+    length = grid_size))
+```
+
+```
+## 3-element Array{Float64,1}:
+##  0.12885743408203118
+##  0.25771486816406236
+##  0.3865723022460935
+```
+
+```julia
+
+value, v_store = @time iterate_value(grid, params_dis)
+```
+
+```
+## Current maximum value difference at iteration 10 is 7.310316889342374.
+## Current maximum value difference at iteration 20 is 4.376956759187493.
+## Current maximum value difference at iteration 30 is 2.6206456931746516.
+## Current maximum value difference at iteration 40 is 1.5690773811596443.
+## Current maximum value difference at iteration 50 is 0.9394645886236788.
+## Current maximum value difference at iteration 60 is 0.5624921523154001.
+## Current maximum value difference at iteration 70 is 0.33678482962292833.
+## Current maximum value difference at iteration 80 is 0.20164551807033604.
+## Current maximum value difference at iteration 90 is 0.12073262030057208.
+## Current maximum value difference at iteration 100 is 0.07228707954499214.
+## Current maximum value difference at iteration 110 is 0.043280944753263384.
+## Current maximum value difference at iteration 120 is 0.0259139003889004.
+## Current maximum value difference at iteration 130 is 0.015515609402569908.
+## Current maximum value difference at iteration 140 is 0.009289768484109118.
+## Current maximum value difference at iteration 150 is 0.005562127548415674.
+## Current maximum value difference at iteration 160 is 0.0033302512239856696.
+## Current maximum value difference at iteration 170 is 0.0019939444247540905.
+## Current maximum value difference at iteration 180 is 0.0011938481818845048.
+## Current maximum value difference at iteration 190 is 0.0007148010063247057.
+## Current maximum value difference at iteration 200 is 0.00042797776669090126.
+## Current maximum value difference at iteration 210 is 0.0002562460981039294.
+## Current maximum value difference at iteration 220 is 0.00015342400445206295.
+##   0.115471 seconds (200.55 k allocations: 12.423 MiB)
+```
+
+```
+## ([-231.98; -192.324; -187.008], [-11.5991 -22.6182 … -231.98 -231.98; -9.61629 -18.7518 … -192.324 -192.324; -9.6447 -18.8072 … -187.008 -187.008])
+```
+
+---
+
+# The value function: every 20 iterations
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-71-J1.png" width="800" /&gt;
+
+---
+
+# The value function: final
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-72-J1.png" width="800" /&gt;
+
+---
+
+# Discretizing the state space
+
+
+```julia
+grid_size = 100;
+grid = collect(range(params_dis.capital_lower, 
+    stop = params_dis.capital_upper, 
+    length = grid_size));
+
+value, v_store = @time iterate_value(grid, params_dis)
+```
+
+```
+## Current maximum value difference at iteration 10 is 6.914720355073825.
+## Current maximum value difference at iteration 20 is 3.8092197025250414.
+## Current maximum value difference at iteration 30 is 2.221007019891772.
+## Current maximum value difference at iteration 40 is 1.3164056274758593.
+## Current maximum value difference at iteration 50 is 0.7840556792955624.
+## Current maximum value difference at iteration 60 is 0.4679885486935973.
+## Current maximum value difference at iteration 70 is 0.27994507576624983.
+## Current maximum value difference at iteration 80 is 0.16751908240780722.
+## Current maximum value difference at iteration 90 is 0.1002998626648548.
+## Current maximum value difference at iteration 100 is 0.05997003214901042.
+## Current maximum value difference at iteration 110 is 0.03590627349490205.
+## Current maximum value difference at iteration 120 is 0.0214984122918338.
+## Current maximum value difference at iteration 130 is 0.01287189357412899.
+## Current maximum value difference at iteration 140 is 0.007706878160803399.
+## Current maximum value difference at iteration 150 is 0.004614392641116183.
+## Current maximum value difference at iteration 160 is 0.0027628073264054365.
+## Current maximum value difference at iteration 170 is 0.0016541948023416353.
+## Current maximum value difference at iteration 180 is 0.0009904275328835865.
+## Current maximum value difference at iteration 190 is 0.0005930055496037312.
+## Current maximum value difference at iteration 200 is 0.00035505432774129986.
+## Current maximum value difference at iteration 210 is 0.00021258414147951044.
+## Current maximum value difference at iteration 220 is 0.0001272819782229817.
+##   0.212330 seconds (159.36 k allocations: 132.605 MiB, 36.64% gc time)
+```
+
+```
+## ([-212.429; -211.764; … ; -183.072; -182.928], [-11.5991 -22.6182 … -212.429 -212.429; -11.5126 -22.4497 … -211.764 -211.764; … ; -9.63309 -18.7845 … -183.072 -183.072; -9.6447 -18.8072 … -182.928 -182.928])
+```
+
+---
+
+# The value function: every 20 iterations
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-74-J1.png" width="800" /&gt;
+
+---
+
+# The value function: final
+
+&lt;img src="6_solution_methods_files/figure-html/unnamed-chunk-75-J1.png" width="800" /&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
