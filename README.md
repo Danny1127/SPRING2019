@@ -34,7 +34,7 @@ To read the first lecture note correctly on your own you'll want to install the 
 6. [Projection Methods](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/5_projection.html)  
 7. [Solution Methods for Discrete Time Dynamic Models](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/6_solution_methods.html)  
 8. [Error Analysis for Dynamic Models](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/7_error_analysis.html)  
-9. [Solution Methods for Continuous Time Dynamic Models](https://github.com/AEM7130/SPRING2019)  
+9. [Solution Methods for Continuous Time Dynamic Models](https://raw.githack.com/AEM7130/SPRING2019/master/lecture_notes/8_optimal_control.html)  
 10. [Advanced Methods for Discrete Time Dynamic Models](https://github.com/AEM7130/SPRING2019)  
 11. [Advanced Methods for Structural Empirical Models](https://github.com/AEM7130/SPRING2019)  
 12. [Integration for High Dimensional Problems](https://github.com/AEM7130/SPRING2019)
